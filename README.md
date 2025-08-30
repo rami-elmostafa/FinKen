@@ -7,7 +7,8 @@
 ## Group Members
 - Ethan Dillon  
 - Kade Fleming  
-- Rami Elmostafa  
+- Rami Elmostafa
+- Roby Bearden
 
 ## Tech Stack
 - **Frontend:** HTML, CSS, JavaScript  
