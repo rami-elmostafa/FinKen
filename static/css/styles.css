@@ -1,8 +1,0 @@
-:root{font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial}
-body{max-width:900px;margin:24px auto;padding:0 16px;color:#111}
-header h1{margin:0 0 12px;font-size:20px}
-table{width:100%;border-collapse:collapse}
-th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
-form input, form button{padding:8px;margin-right:8px}
-form input[type=number]{width:120px}
-#balance{margin-bottom:16px}
