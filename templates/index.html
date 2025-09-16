@@ -3,11 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinKen</title>
+    <title>FinKen - Financial Accounting System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h1>Hello World</h1>
-    <script src="{{ url_for('static', filename='app.js') }}"></script>
+    <!-- Header with Branding -->
+    <div class="header">
+        <div class="branding">
+            <div class="branding-content">
+                <img src="{{ url_for('static', filename='images/finkenlogo.png') }}" alt="FinKen Logo" class="logo-image">
+                <div class="branding-text">
+                    <h1><span class="fin-text">Fin</span><span class="ken-text">Ken</span></h1>
+                    <p>Financial Accounting App</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Login Form -->
+        <div class="login-container">
+            <div class="login-form">
+                <h2>Sign In</h2>
+
+                <form action="#" method="POST">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" 
+                               placeholder="Enter your username">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" 
+                               placeholder="Enter your password">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Sign In</button>
+                </form>
+
+                <!-- Action Links -->
+                <div class="login-actions">
+                    <a href="#" class="btn btn-link">Forgot Password?</a>
+                    <a href="#" class="btn btn-secondary">Create New User Account</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

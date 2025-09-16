@@ -1,0 +1,275 @@
+/* FinKen Financial Accounting System - Minimal Login Page */
+
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background: #ffffff;
+    min-height: 100vh;
+}
+
+/* Header with Branding in Top Right */
+.header {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    z-index: 100;
+}
+
+.branding-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.branding-text h1 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    text-align: left;
+}
+
+.fin-text {
+    color: #000000;
+}
+
+.ken-text {
+    color: #FFD100;
+}
+
+.branding-text p {
+    color: #000000;
+    font-size: 0.85rem;
+    font-weight: 400;
+    text-align: left;
+}
+
+.logo-image {
+    height: 6rem;
+    width: auto;
+    object-fit: contain;
+}
+
+.container {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+/* Login Container */
+.login-container {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    width: 100%;
+}
+
+.login-form {
+    padding: 3rem 2.5rem;
+}
+
+/* Form Header */
+.login-form h2 {
+    color: #333;
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 400;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+/* Input Styles */
+.form-group input {
+    width: 100%;
+    padding: 0.875rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    background-color: #fff;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #FFD100;
+    box-shadow: 0 0 0 2px rgba(255, 209, 0, 0.2);
+}
+
+.form-group input::placeholder {
+    color: #aaa;
+}
+
+/* Button Styles */
+.btn {
+    display: inline-block;
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    margin-bottom: 0.75rem;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+    background-color: #FFD100;
+    color: #333;
+    border: 1px solid #FFD100;
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    background-color: #e6bc00;
+    border-color: #e6bc00;
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: #666;
+    border: 1px solid #ddd;
+}
+
+.btn-secondary:hover {
+    background-color: #f8f8f8;
+    border-color: #ccc;
+}
+
+.btn-link {
+    background: none;
+    color: #666;
+    border: none;
+    text-decoration: none;
+    padding: 0.75rem;
+    font-weight: 400;
+}
+
+.btn-link:hover {
+    color: #333;
+    text-decoration: underline;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Login Actions */
+.login-actions {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+        max-width: 100%;
+    }
+    
+    .header {
+        top: 1.5rem;
+        right: 1.5rem;
+    }
+    
+    .branding-content {
+        gap: 0.75rem;
+    }
+    
+    .branding-text h1 {
+        font-size: 1.5rem;
+    }
+    
+    .branding-text p {
+        font-size: 0.8rem;
+    }
+    
+    .logo-image {
+        height: 2.5rem;
+    }
+    
+    .login-form {
+        padding: 2rem 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .header {
+        top: 1rem;
+        right: 1rem;
+    }
+    
+    .branding-content {
+        gap: 0.5rem;
+    }
+    
+    .branding-text h1 {
+        font-size: 1.25rem;
+    }
+    
+    .branding-text p {
+        font-size: 0.75rem;
+    }
+    
+    .logo-image {
+        height: 2rem;
+    }
+    
+    .login-form {
+        padding: 1.5rem 1rem;
+    }
+    
+    .login-form h2 {
+        font-size: 1.25rem;
+    }
+}
+
+/* Subtle Animation */
+.login-container {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
