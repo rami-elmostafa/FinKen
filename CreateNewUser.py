@@ -3,17 +3,14 @@ from datetime import datetime
 from supabase import create_client, Client
 from passwordHash import hash_password
 
-def create_new_user(first_name, last_name, email, password, security_question, security_answer, dob):
+def create_new_user(first_name, last_name, email, dob):
     """
-    Create a new user and add their registration request to the Supabase database.
+    Create a new user registration request in the Supabase database.
     
     Args:
         first_name (str): User's first name
         last_name (str): User's last name
         email (str): User's email address
-        password (str): User's plain text password
-        security_question (str): User's security question
-        security_answer (str): User's security question answer
         dob (str): User's date of birth (YYYY-MM-DD format)
         
     Returns:
@@ -30,10 +27,6 @@ def create_new_user(first_name, last_name, email, password, security_question, s
         
         supabase: Client = create_client(supabase_url, supabase_key)
         
-        # Hash the password and security answer
-        hashed_password = hash_password(password)
-        hashed_security_answer = hash_password(security_answer)
-        
         # Validate date of birth format
         try:
             datetime.strptime(dob, '%Y-%m-%d')
@@ -42,14 +35,12 @@ def create_new_user(first_name, last_name, email, password, security_question, s
         
         # Prepare user data for insertion
         user_data = {
-            'first_name': first_name.strip(),
-            'last_name': last_name.strip(),
-            'email': email.strip().lower(),
-            'password_hash': hashed_password,
-            'security_question': security_question.strip(),
-            'security_answer_hash': hashed_security_answer,
-            'date_of_birth': dob,
-            'created_at': datetime.now().isoformat()
+            'FirstName': first_name.strip(),
+            'LastName': last_name.strip(),
+            'Email': email.strip().lower(),
+            'DOB': dob,
+            'Address': '',  # Empty for now since we don't collect address in the form
+            'RequestDate': datetime.now().isoformat()
         }
         
         # Insert data into RegistrationRequests table
@@ -59,7 +50,7 @@ def create_new_user(first_name, last_name, email, password, security_question, s
             return {
                 'success': True,
                 'message': 'User registration request submitted successfully',
-                'user_id': response.data[0]['id'] if response.data else None
+                'user_id': response.data[0]['RequestID'] if response.data else None
             }
         else:
             return {
@@ -73,7 +64,7 @@ def create_new_user(first_name, last_name, email, password, security_question, s
             'message': f'Error creating user: {str(e)}'
         }
 
-def validate_user_input(first_name, last_name, email, password, security_question, security_answer, dob):
+def validate_user_input(first_name, last_name, email, dob):
     """
     Validate user input before creating the user.
     
@@ -81,9 +72,6 @@ def validate_user_input(first_name, last_name, email, password, security_questio
         first_name (str): User's first name
         last_name (str): User's last name
         email (str): User's email address
-        password (str): User's plain text password
-        security_question (str): User's security question
-        security_answer (str): User's security question answer
         dob (str): User's date of birth
         
     Returns:
@@ -102,17 +90,6 @@ def validate_user_input(first_name, last_name, email, password, security_questio
         errors.append("Email is required")
     elif '@' not in email or '.' not in email:
         errors.append("Please enter a valid email address")
-    
-    if not password:
-        errors.append("Password is required")
-    elif len(password) < 8:
-        errors.append("Password must be at least 8 characters long")
-    
-    if not security_question or not security_question.strip():
-        errors.append("Security question is required")
-    
-    if not security_answer or not security_answer.strip():
-        errors.append("Security answer is required")
     
     if not dob:
         errors.append("Date of birth is required")
