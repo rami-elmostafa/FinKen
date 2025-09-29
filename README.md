@@ -13,7 +13,7 @@
 
 ## Tech Stack
 - **Frontend:** HTML, CSS, JavaScript  
-- **Backend:** Python (Flask / FastAPI / Django)  
+- **Backend:** Python (Flask)  
 - **Database:** PostgreSQL  
 - **Deployment:** Cloud Service  
 
