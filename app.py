@@ -14,6 +14,7 @@ def create_new_user():
 
 @app.route("/ForgotPassword")
 def forgot_password():
+    # Change this to whatever the new forgot password page is once it is created
     return render_template('ForgotPassword.html')
 
 if __name__ == '__main__':
