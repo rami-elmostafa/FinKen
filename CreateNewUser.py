@@ -49,7 +49,7 @@ def create_new_user(first_name, last_name, email, password, security_question, s
             'security_question': security_question.strip(),
             'security_answer_hash': hashed_security_answer,
             'date_of_birth': dob,
-            'created_at': datetime.utcnow().isoformat()
+            'created_at': datetime.now().isoformat()
         }
         
         # Insert data into RegistrationRequests table
