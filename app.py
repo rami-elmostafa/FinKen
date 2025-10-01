@@ -96,27 +96,68 @@ def sign_out():
     return redirect(url_for('index'))
 
 # Placeholder routes for different user dashboards
-@app.route('/admin_dashboard')
+@app.route('/AdminDashboard')
 def admin_dashboard():
     if 'user_id' not in session or session.get('user_role') != 'administrator':
         flash('Access denied. Administrator privileges required.', 'error')
         return redirect(url_for('sign_in'))
     return f"Admin Dashboard - Welcome {session.get('user_name')}"
 
-@app.route('/manager_dashboard')
+@app.route('/ManagerDashboard')
 def manager_dashboard():
     if 'user_id' not in session or session.get('user_role') not in ['administrator', 'manager']:
         flash('Access denied. Manager privileges required.', 'error')
         return redirect(url_for('sign_in'))
     return f"Manager Dashboard - Welcome {session.get('user_name')}"
 
-@app.route('/accountant_dashboard')
+@app.route('/AccountantDashboard')
 def accountant_dashboard():
     if 'user_id' not in session:
         flash('Please sign in to access this page.', 'error')
         return redirect(url_for('sign_in'))
     return f"Accountant Dashboard - Welcome {session.get('user_name')}"
 
+@app.route('/FinishSignUp', methods=['GET', 'POST'])
+def finish_sign_up():
+    if request.method == 'GET':
+        token = request.args.get('token')
+        if not token:
+            flash('Missing signup token.', 'error')
+            return redirect(url_for('index'))
+        ctx = get_signup_context(token)
+        if not ctx.get('success'):
+            flash(ctx.get('message', 'Invalid signup link'), 'error')
+            return redirect(url_for('index'))
+        full_name = f"{ctx['request'].get('FirstName','')} {ctx['request'].get('LastName','')}".strip()
+        return render_template('FinishSignUp.html',
+                               token=token,
+                               full_name=full_name,
+                               security_questions=ctx.get('security_questions', []))
+    else:
+        token = request.form.get('token')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        question_id = request.form.get('security_question')
+        answer = request.form.get('security_answer')
+        res = finalize_signup(token, password, confirm_password, int(question_id) if question_id else None, answer)
+        if res.get('success'):
+            flash(f"Account created. Your username is {res.get('username')}. Please sign in.", 'success')
+            return redirect(url_for('index'))
+        else:
+            flash(res.get('message', 'Could not complete sign up'), 'error')
+            # Re-hydrate page with questions again
+            ctx = get_signup_context(token)
+            full_name = ''
+            questions = []
+            if ctx.get('success'):
+                full_name = f"{ctx['request'].get('FirstName','')} {ctx['request'].get('LastName','')}".strip()
+                questions = ctx.get('security_questions', [])
+            return render_template('FinishSignUp.html',
+                                   token=token,
+                                   full_name=full_name,
+                                   security_questions=questions)
+        
+        
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))
     app.run(host='0.0.0.0', port=port)
