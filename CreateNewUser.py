@@ -27,25 +27,10 @@ def create_new_user(first_name, last_name, email, dob):
         
         supabase: Client = create_client(supabase_url, supabase_key)
         
-        # Validate date of birth format
-        try:
-            datetime.strptime(dob, '%Y-%m-%d')
-        except ValueError:
-            raise ValueError("Date of birth must be in YYYY-MM-DD format")
-        
-        # Prepare user data for insertion
-        user_data = {
-            'FirstName': first_name.strip(),
-            'LastName': last_name.strip(),
-            'Email': email.strip().lower(),
-            'DOB': dob,
-            'Address': '',  # Empty for now since we don't collect address in the form
-            'RequestDate': datetime.now().isoformat()
-        }
-        
-        # Insert data into RegistrationRequests table
+        # Prepare and insert data into RegistrationRequests table
+        user_data = dataPrep()
         response = supabase.table('RegistrationRequests').insert(user_data).execute()
-        
+
         if response.data:
             return {
                 'success': True,
@@ -63,6 +48,46 @@ def create_new_user(first_name, last_name, email, dob):
             'success': False,
             'message': f'Error creating user: {str(e)}'
         }
+    
+    
+def dataPrep(first_name, last_name, email, dob, username):
+    """
+    Prepare and validate user data for insertion.
+
+    This inner helper builds the dict to be inserted and performs
+    a lightweight validation of the date format. It returns the
+    prepared dict instead of mutating a parameter.
+    """
+    # Validate date of birth format
+    try:
+        datetime.strptime(dob, '%Y-%m-%d')
+    except ValueError:
+        raise ValueError("Date of birth must be in YYYY-MM-DD format")
+
+    # Prepare user data for insertion
+    user_data = {
+        'FirstName': first_name.strip(),
+        'LastName': last_name.strip(),
+        'Email': email.strip().lower(),
+        'DOB': dob,
+        'Username': first_name.strip()[0].lower() + last_name.strip().lower() + dob[2:7].replace('-',''),
+        'Address': '',  # Empty for now since we don't collect address in the form
+        'RequestDate': datetime.now().isoformat()
+    }
+
+    return user_data
+
+
+def dobValidate(dob):
+    """
+    Validate the date of birth to ensure it's in the correct format.
+
+    Args:
+        dob (str): Date of birth in YYYY-MM-DD format
+    
+    Returns:
+        dob (str): Validated date of birth
+    """
 
 def validate_user_input(first_name, last_name, email, dob):
     """
