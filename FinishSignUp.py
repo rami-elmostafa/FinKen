@@ -44,11 +44,11 @@ def _generate_username(first_name: str, last_name: str, created_at: datetime, sb
 def create_signup_invitation(request_id: int, reviewer_user_id: int, expires_in_hours: int = 48):
     sb = _sb()
     # Load request
-    req = sb.table('Registration_Requests').select('*').eq('RequestID', request_id).single().execute()
+    req = sb.table('registration_requests').select('*').eq('RequestID', request_id).single().execute()
     if not req.data:
         return {'success': False, 'message': 'Registration request not found'}
     # Mark approved
-    sb.table('Registration_Requests').update({
+    sb.table('registration_requests').update({
         'Status': 'Approved',
         'ReviewedByUserID': reviewer_user_id,
         'ReviewDate': 'now()'
@@ -56,7 +56,7 @@ def create_signup_invitation(request_id: int, reviewer_user_id: int, expires_in_
     # Create token
     token = secrets.token_urlsafe(32)
     expires_at = (_now_utc() + timedelta(hours=expires_in_hours)).isoformat()
-    sb.table('Signup_Invitations').insert({
+    sb.table('signup_invitations').insert({
         'RequestID': request_id,
         'Token': token,
         'ExpiresAt': expires_at
@@ -85,7 +85,7 @@ def create_signup_invitation(request_id: int, reviewer_user_id: int, expires_in_
 
 def get_signup_context(token: str):
     sb = _sb()
-    inv = sb.table('Signup_Invitations').select('*').eq('Token', token).single().execute()
+    inv = sb.table('signup_invitations').select('*').eq('Token', token).single().execute()
     if not inv.data:
         return {'success': False, 'message': 'Invalid signup link'}
     if inv.data.get('UsedAt'):
@@ -95,7 +95,7 @@ def get_signup_context(token: str):
     req = sb.table('Registration_Requests').select('*').eq('RequestID', inv.data['RequestID']).single().execute()
     if not req.data or req.data.get('Status') != 'Approved':
         return {'success': False, 'message': 'Registration is not in an approvable state'}
-    qs = sb.table('Security_Questions').select('QuestionID,QuestionText').order('QuestionText').execute()
+    qs = sb.table('security_questions').select('QuestionID,QuestionText').order('QuestionText').execute()
     return {
         'success': True,
         'request': req.data,
@@ -141,19 +141,19 @@ def finalize_signup(token: str, password: str, confirm_password: str, question_i
         return {'success': False, 'message': 'Could not create user account'}
     user_id = ins.data[0]['UserID']
     # Password history
-    sb.table('Password_History').insert({
+    sb.table('password_history').insert({
         'UserID': user_id,
         'PasswordHash': pw_hash,
         'DateSet': created_at.isoformat()
     }).execute()
     # Security answer
-    sb.table('User_Security_Answers').insert({
+    sb.table('user_security_answers').insert({
         'UserID': user_id,
         'QuestionID': int(question_id),
         'AnswerHash': answer_hash
     }).execute()
     # Mark invitation used
-    sb.table('Signup_Invitations').update({
+    sb.table('signup_invitations').update({
         'UsedAt': 'now()'
     }).eq('Token', token).execute()
     return {'success': True, 'message': 'Account created successfully', 'username': username}

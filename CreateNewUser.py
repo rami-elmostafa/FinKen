@@ -42,9 +42,9 @@ def create_new_user(first_name, last_name, email, dob):
             'Address': '',  # Empty for now since we don't collect address in the form
             'RequestDate': datetime.now().isoformat()
         }
-        
-        # Insert data into RegistrationRequests table
-        response = supabase.table('Registration_Requests').insert(user_data).execute()
+
+        # Insert data into registration_requests table
+        response = supabase.table('registration_requests').insert(user_data).execute()
         
         if response.data:
             return {

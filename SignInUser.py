@@ -47,7 +47,7 @@ def sign_in_user(username, password):
         
         # Query the users table for the username
         # Note: Assuming the users table has columns: Username, PasswordHash, and user details
-        response = supabase.table('Users').select('*').eq('Username', username).execute()
+        response = supabase.table('users').select('*').eq('Username', username).execute()
         
         # Check if user exists
         if not response.data or len(response.data) == 0:
@@ -89,14 +89,14 @@ def sign_in_user(username, password):
             # Update failed login attempts (optional - requires FailedLoginAttempts column)
             try:
                 failed_attempts = user_record.get('FailedLoginAttempts', 0) + 1
-                supabase.table('Users').update({
+                supabase.table('users').update({
                     'FailedLoginAttempts': failed_attempts,
                     'LastFailedLogin': 'now()'
                 }).eq('Username', username).execute()
                 
                 # Check if user should be suspended after 3 failed attempts
                 if failed_attempts >= 3:
-                    supabase.table('Users').update({
+                    supabase.table('users').update({
                         'IsSuspended': True,
                         'SuspensionReason': 'Too many failed login attempts'
                     }).eq('Username', username).execute()
@@ -119,7 +119,7 @@ def sign_in_user(username, password):
         
         # Password is correct - reset failed login attempts and update last login
         try:
-            supabase.table('Users').update({
+            supabase.table('users').update({
                 'FailedLoginAttempts': 0,
                 'LastLogin': 'now()'
             }).eq('Username', username).execute()
