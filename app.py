@@ -51,6 +51,10 @@ def forgot_password():
     # Change this to whatever the new forgot password page is once it is created
     return render_template('ForgotPassword.html')
 
+@app.route("/Home")
+def home():
+    return render_template('Home.html')
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))
     app.run(host='0.0.0.0', port=port)
