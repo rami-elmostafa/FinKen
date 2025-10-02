@@ -39,7 +39,7 @@ def send_email(sender_email, sender_name, receiver_email, subject_line, body):
     )
     
     # Set the reply-to address to the sender's email
-    message.reply_to = sender_email
+    message.reply_to = (sender_email, sender_name)
     
     try:
         # Get API key from environment variables
