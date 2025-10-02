@@ -633,3 +633,23 @@ body {
     font-size: 20px;
     font-weight: 600;
 }
+
+/* User Info Display Styles for FinishSignUp */
+.user-info-display {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.display-field {
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-size: 16px;
+    color: #495057;
+    min-height: 20px;
+    font-weight: 500;
+}

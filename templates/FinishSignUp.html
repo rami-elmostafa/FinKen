@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finish Sign Up - FinKen</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<!-- Header with Branding -->
+    <div class="header">
+        <div class="branding">
+            <div class="branding-content">
+                <img src="{{ url_for('static', filename='images/finkenlogo.png') }}" alt="FinKen Logo" class="logo-image">
+                <div class="branding-text">
+                    <h1><span class="pocket-text">Pocket</span><span class="watch-text">Watch</span></h1>
+                    <p>Financial Accounting App</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="form-container">
+            <h2 class="header-title">Complete Your Account Setup</h2>
+            
+            <!-- User Info Display (Non-editable) -->
+            <div class="user-info-display">
+                <div class="form-group">
+                    <label>Full Name:</label>
+                    <div class="display-field">{{ full_name }}</div>
+                </div>
+                <div class="form-group">
+                    <label>Username:</label>
+                    <div class="display-field" id="username-display">Will be generated upon account creation</div>
+                </div>
+            </div>
+
+            <form action="/FinishSignUp" method="POST" enctype="multipart/form-data" id="finish-signup-form">
+                <input type="hidden" name="token" value="{{ token }}">
+                
+                <!-- Password Fields -->
+                <div class="form-group">
+                    <label for="password">Password <span class="required">*</span></label>
+                    <input type="password" id="password" name="password" 
+                           placeholder="Enter your password" required>
+                    <div class="password-requirements">
+                        Password must be at least 8 characters, start with a letter, and include a letter, number, and special character
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password <span class="required">*</span></label>
+                    <input type="password" id="confirm_password" name="confirm_password" 
+                           placeholder="Confirm your password" required>
+                    <div id="password-match-message" class="password-requirements"></div>
+                </div>
+
+                <!-- Security Question -->
+                <div class="form-group">
+                    <label for="security_question">Security Question <span class="required">*</span></label>
+                    <select id="security_question" name="security_question" required>
+                        <option value="">Select a security question</option>
+                        {% for question in security_questions %}
+                            <option value="{{ question.QuestionID }}">{{ question.QuestionText }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="security_answer">Security Answer <span class="required">*</span></label>
+                    <input type="text" id="security_answer" name="security_answer" 
+                           placeholder="Enter your security answer" required>
+                </div>
+
+                <!-- Profile Picture Upload -->
+                <div class="form-group">
+                    <label for="profile_picture">Profile Picture (Optional)</label>
+                    <input type="file" id="profile_picture" name="profile_picture" 
+                           accept=".jpg,.jpeg,.png">
+                    <div class="password-requirements">
+                        Accepted formats: JPG, JPEG, PNG (will be converted to WebP)
+                    </div>
+                    <div id="profile-preview" style="margin-top: 10px; display: none;">
+                        <img id="preview-image" src="" alt="Profile Preview" 
+                             style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd;">
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="btn-container">
+                    <a href="/" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary" id="submit-btn">Complete Sign Up</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Password validation and real-time feedback
+        function validatePassword(password) {
+            const errors = [];
+            
+            if (password.length < 8) {
+                errors.push("Password must be at least 8 characters long");
+            }
+            
+            if (password.length > 0 && !password[0].match(/[a-zA-Z]/)) {
+                errors.push("Password must start with a letter");
+            }
+            
+            if (!/[a-zA-Z]/.test(password)) {
+                errors.push("Password must contain at least one letter");
+            }
+            
+            if (!/[0-9]/.test(password)) {
+                errors.push("Password must contain at least one number");
+            }
+            
+            if (!/[^a-zA-Z0-9]/.test(password)) {
+                errors.push("Password must contain at least one special character");
+            }
+            
+            return {
+                valid: errors.length === 0,
+                errors: errors
+            };
+        }
+
+        // Real-time password validation
+        document.getElementById('password').addEventListener('input', function() {
+            const password = this.value;
+            const requirements = document.querySelector('.password-requirements');
+            
+            if (password.length === 0) {
+                requirements.style.color = '#666';
+                requirements.textContent = 'Password must be at least 8 characters, start with a letter, and include a letter, number, and special character';
+                return;
+            }
+            
+            const validation = validatePassword(password);
+            
+            if (validation.valid) {
+                requirements.style.color = 'green';
+                requirements.textContent = '✓ Password meets all requirements';
+            } else {
+                requirements.style.color = 'red';
+                requirements.textContent = validation.errors.join('. ');
+            }
+        });
+
+        // Password confirmation validation
+        function checkPasswordMatch() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const messageDiv = document.getElementById('password-match-message');
+            
+            if (confirmPassword.length === 0) {
+                messageDiv.textContent = '';
+                return;
+            }
+            
+            if (password === confirmPassword) {
+                messageDiv.style.color = 'green';
+                messageDiv.textContent = '✓ Passwords match';
+            } else {
+                messageDiv.style.color = 'red';
+                messageDiv.textContent = '✗ Passwords do not match';
+            }
+        }
+
+        document.getElementById('confirm_password').addEventListener('input', checkPasswordMatch);
+        document.getElementById('password').addEventListener('input', checkPasswordMatch);
+
+        // Profile picture preview
+        document.getElementById('profile_picture').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('profile-preview');
+            const previewImage = document.getElementById('preview-image');
+            
+            if (file) {
+                // Check file size (limit to 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size must be less than 5MB');
+                    this.value = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+                
+                // Check file type
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Only JPG, JPEG, and PNG files are allowed');
+                    this.value = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+                
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+
+        // Form submission validation
+        document.getElementById('finish-signup-form').addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const securityQuestion = document.getElementById('security_question').value;
+            const securityAnswer = document.getElementById('security_answer').value.trim();
+            
+            // Validate password
+            const validation = validatePassword(password);
+            if (!validation.valid) {
+                alert('Password does not meet requirements:\n' + validation.errors.join('\n'));
+                e.preventDefault();
+                return;
+            }
+            
+            // Check password match
+            if (password !== confirmPassword) {
+                alert('Passwords do not match');
+                e.preventDefault();
+                return;
+            }
+            
+            // Check security question and answer
+            if (!securityQuestion) {
+                alert('Please select a security question');
+                e.preventDefault();
+                return;
+            }
+            
+            if (!securityAnswer) {
+                alert('Please provide an answer to your security question');
+                e.preventDefault();
+                return;
+            }
+            
+            // Disable submit button to prevent double submission
+            document.getElementById('submit-btn').disabled = true;
+            document.getElementById('submit-btn').textContent = 'Creating Account...';
+        });
+    </script>
+</body>
+</html>

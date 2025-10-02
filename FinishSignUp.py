@@ -156,4 +156,4 @@ def finalize_signup(token: str, password: str, confirm_password: str, question_i
     sb.table('signup_invitations').update({
         'UsedAt': 'now()'
     }).eq('Token', token).execute()
-    return {'success': True, 'message': 'Account created successfully', 'username': username}
+    return {'success': True, 'message': 'Account created successfully', 'username': username, 'user_id': user_id}
