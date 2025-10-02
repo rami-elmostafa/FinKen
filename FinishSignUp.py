@@ -35,7 +35,7 @@ def _generate_username(first_name: str, last_name: str, created_at: datetime, sb
     candidate = base
     suffix = 1
     while True:
-        resp = sb.table('Users').select('Username').eq('Username', candidate).execute()
+        resp = sb.table('users').select('Username').eq('Username', candidate).execute()
         if not resp.data:
             return candidate
         suffix += 1
@@ -92,7 +92,7 @@ def get_signup_context(token: str):
         return {'success': False, 'message': 'This signup link was already used'}
     if datetime.fromisoformat(inv.data['ExpiresAt']) < _now_utc():
         return {'success': False, 'message': 'This signup link has expired'}
-    req = sb.table('Registration_Requests').select('*').eq('RequestID', inv.data['RequestID']).single().execute()
+    req = sb.table('registration_requests').select('*').eq('RequestID', inv.data['RequestID']).single().execute()
     if not req.data or req.data.get('Status') != 'Approved':
         return {'success': False, 'message': 'Registration is not in an approvable state'}
     qs = sb.table('security_questions').select('QuestionID,QuestionText').order('QuestionText').execute()

@@ -4,6 +4,7 @@ from supabase import create_client, Client
 from passwordHash import hash_password
 
 from dotenv import load_dotenv
+from EmailUser import NewUserAdminNotification
 load_dotenv()
 
 #This is the function to create a new user in the database
@@ -49,6 +50,13 @@ def create_new_user(first_name, last_name, email, dob):
         response = supabase.table('registration_requests').insert(user_data).execute()
         
         if response.data:
+            # Send notification to administrators about the new registration request
+            notification_result = NewUserAdminNotification(first_name, last_name, email)
+            
+            # Log notification result but don't fail the registration if email fails
+            if not notification_result.get('success'):
+                print(f"Warning: Failed to notify administrators: {notification_result.get('error', 'Unknown error')}")
+            
             return {
                 'success': True,
                 'message': 'User registration request submitted successfully',

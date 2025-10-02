@@ -54,7 +54,7 @@ def update_user(
         if not update_data:
             return {"error": "No fields to update."}
         
-        response = supabase.table("Users").update(update_data).eq("UserID", user_id).execute()
+        response = supabase.table("users").update(update_data).eq("UserID", user_id).execute()
         if response.data:
             return {"success": True, "data": response.data[0]}
         else:

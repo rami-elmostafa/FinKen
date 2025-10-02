@@ -5,6 +5,13 @@ from CreateNewUser import create_new_user, validate_user_input
 from SignInUser import sign_in_user, validate_sign_in_input
 from FinishSignUp import get_signup_context, finalize_signup
 from ProfilePictureHandler import save_user_profile_picture
+from AdminManagement import (
+    get_pending_registration_requests, 
+    get_all_registration_requests,
+    approve_registration_request,
+    reject_registration_request,
+    get_registration_request_details
+)
 
 # Load environment variables from ..env file
 load_dotenv()
@@ -102,8 +109,64 @@ def sign_out():
 def admin_dashboard():
     if 'user_id' not in session or session.get('user_role') != 'administrator':
         flash('Access denied. Administrator privileges required.', 'error')
-        return redirect(url_for('sign_in'))
-    return f"Admin Dashboard - Welcome {session.get('user_name')}"
+        return redirect(url_for('index'))
+    
+    # Get pending registration requests for the admin dashboard
+    pending_requests = get_pending_registration_requests()
+    
+    return render_template('AdminDashboard.html', 
+                         user_name=session.get('user_name'),
+                         pending_requests=pending_requests.get('requests', []))
+
+@app.route('/ManageRegistrations')
+def manage_registrations():
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        flash('Access denied. Administrator privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    # Get all registration requests
+    all_requests = get_all_registration_requests()
+    
+    return render_template('ManageRegistrations.html', 
+                         user_name=session.get('user_name'),
+                         requests=all_requests.get('requests', []))
+
+@app.route('/ApproveRegistration/<int:request_id>', methods=['POST'])
+def approve_registration(request_id):
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        flash('Access denied. Administrator privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    reviewer_user_id = session.get('user_id')
+    
+    # Approve the registration request and send invitation email
+    result = approve_registration_request(request_id, reviewer_user_id)
+    
+    if result.get('success'):
+        flash(f'Registration request approved successfully. Invitation email sent.', 'success')
+    else:
+        flash(f'Failed to approve registration: {result.get("message", "Unknown error")}', 'error')
+    
+    return redirect(url_for('manage_registrations'))
+
+@app.route('/RejectRegistration/<int:request_id>', methods=['POST'])
+def reject_registration(request_id):
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        flash('Access denied. Administrator privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    reviewer_user_id = session.get('user_id')
+    rejection_reason = request.form.get('rejection_reason', '')
+    
+    # Reject the registration request
+    result = reject_registration_request(request_id, reviewer_user_id, rejection_reason)
+    
+    if result.get('success'):
+        flash('Registration request rejected successfully.', 'success')
+    else:
+        flash(f'Failed to reject registration: {result.get("message", "Unknown error")}', 'error')
+    
+    return redirect(url_for('manage_registrations'))
 
 @app.route('/ManagerDashboard')
 def manager_dashboard():
@@ -142,8 +205,29 @@ def finish_sign_up():
         question_id = request.form.get('security_question')
         answer = request.form.get('security_answer')
         
+        # Convert question_id to int safely
+        try:
+            question_id_int = int(question_id) if question_id and question_id.strip() else None
+        except (ValueError, TypeError):
+            question_id_int = None
+        
         # Handle the signup process
-        res = finalize_signup(token, password, confirm_password, int(question_id) if question_id else None, answer)
+        try:
+            res = finalize_signup(token, password, confirm_password, question_id_int, answer)
+        except Exception as e:
+            print(f"Error in finalize_signup: {str(e)}")
+            flash(f'Account creation failed: {str(e)}', 'error')
+            # Re-hydrate page with questions again
+            ctx = get_signup_context(token)
+            full_name = ''
+            questions = []
+            if ctx.get('success'):
+                full_name = f"{ctx['request'].get('FirstName','')} {ctx['request'].get('LastName','')}".strip()
+                questions = ctx.get('security_questions', [])
+            return render_template('FinishSignUp.html',
+                                   token=token,
+                                   full_name=full_name,
+                                   security_questions=questions)
         
         if res.get('success'):
             # Handle profile picture upload if provided

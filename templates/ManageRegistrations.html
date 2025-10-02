@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Registrations - FinKen</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <!-- Header with Branding -->
+    <div class="header">
+        <div class="branding">
+            <div class="branding-content">
+                <img src="{{ url_for('static', filename='images/finkenlogo.png') }}" alt="FinKen Logo" class="logo-image">
+                <div class="branding-text">
+                    <h1><span class="pocket-text">Pocket</span><span class="watch-text">Watch</span></h1>
+                    <p>Financial Accounting App</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <button class="nav-toggle">Toggle Navigation</button>
+    <nav class="navbar">
+        <ul class="nav-list">
+            <img src="{{ url_for('static', filename='images/finkenlogo.png') }}" alt="FinKen Logo" class="logo-image">
+            <li><a href="/AdminDashboard">Dashboard</a></li>
+            <li class="active"><a href="/ManageRegistrations">Manage Registrations</a></li>
+            <li><a href="/Users">Users</a></li>
+            <li><a href="#">Statements</a></li>
+            <li><a href="/SignOut">Sign Out</a></li>
+        </ul>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <div class="admin-container">
+        <h1 class="admin-header">Manage Registration Requests</h1>
+        
+        <!-- Filter Controls -->
+        <div class="filter-controls">
+            <label for="status-filter">Filter by Status:</label>
+            <select id="status-filter">
+                <option value="">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+            </select>
+            
+            <input type="text" id="search-input" placeholder="Search by name or email...">
+        </div>
+
+        <!-- Registration Requests Table -->
+        <div class="requests-table">
+            <table id="requests-table">
+                <thead>
+                    <tr>
+                        <th>Request ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Date of Birth</th>
+                        <th>Request Date</th>
+                        <th>Status</th>
+                        <th>Reviewed By</th>
+                        <th>Review Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in requests %}
+                    <tr data-status="{{ request.Status }}" data-name="{{ request.FirstName }} {{ request.LastName }}" data-email="{{ request.Email }}">
+                        <td>{{ request.RequestID }}</td>
+                        <td>{{ request.FirstName }} {{ request.LastName }}</td>
+                        <td>{{ request.Email }}</td>
+                        <td>{{ request.DOB if request.DOB else 'N/A' }}</td>
+                        <td>{{ request.RequestDate[:10] if request.RequestDate else 'N/A' }}</td>
+                        <td>
+                            <span class="status-badge status-{{ request.Status.lower() }}">
+                                {{ request.Status }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if request.reviewer %}
+                                {{ request.reviewer.FirstName }} {{ request.reviewer.LastName }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td>{{ request.ReviewDate[:10] if request.ReviewDate else 'N/A' }}</td>
+                        <td>
+                            {% if request.Status == 'Pending' %}
+                                <div class="action-buttons">
+                                    <form style="display: inline;" method="POST" action="/ApproveRegistration/{{ request.RequestID }}">
+                                        <button type="submit" class="btn btn-small btn-success" 
+                                                onclick="return confirm('Approve registration for {{ request.FirstName }} {{ request.LastName }}?\n\nThis will send them an email with a signup link.')">
+                                            Approve
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-small btn-danger reject-btn" 
+                                            data-request-id="{{ request.RequestID }}" 
+                                            data-user-name="{{ request.FirstName }} {{ request.LastName }}">
+                                        Reject
+                                    </button>
+                                </div>
+                            {% else %}
+                                <span class="text-muted">{{ request.Status }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            {% if not requests %}
+            <div class="no-requests">
+                <p>No registration requests found.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div id="reject-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" id="close-modal">&times;</span>
+            <h2>Reject Registration Request</h2>
+            <p id="reject-user-name"></p>
+            <form id="reject-form" method="POST">
+                <div class="form-group">
+                    <label for="rejection_reason">Reason for rejection (optional):</label>
+                    <textarea id="rejection_reason" name="rejection_reason" rows="3" 
+                              placeholder="Enter reason for rejection..."></textarea>
+                </div>
+                <div class="btn-container">
+                    <button type="button" class="btn btn-secondary" id="cancel-reject">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Reject Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Filter functionality
+        const statusFilter = document.getElementById('status-filter');
+        const searchInput = document.getElementById('search-input');
+        const tableRows = document.querySelectorAll('#requests-table tbody tr');
+
+        function filterTable() {
+            const statusValue = statusFilter.value.toLowerCase();
+            const searchValue = searchInput.value.toLowerCase();
+
+            tableRows.forEach(row => {
+                const status = row.dataset.status.toLowerCase();
+                const name = row.dataset.name.toLowerCase();
+                const email = row.dataset.email.toLowerCase();
+
+                const statusMatch = !statusValue || status === statusValue;
+                const searchMatch = !searchValue || 
+                                  name.includes(searchValue) || 
+                                  email.includes(searchValue);
+
+                row.style.display = statusMatch && searchMatch ? '' : 'none';
+            });
+        }
+
+        statusFilter.addEventListener('change', filterTable);
+        searchInput.addEventListener('input', filterTable);
+
+        // Modal functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Attach event listeners to reject buttons
+            document.querySelectorAll('.reject-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const requestId = this.dataset.requestId;
+                    const userName = this.dataset.userName;
+                    showRejectModal(requestId, userName);
+                });
+            });
+
+            // Close modal button
+            document.getElementById('close-modal').addEventListener('click', closeRejectModal);
+            document.getElementById('cancel-reject').addEventListener('click', closeRejectModal);
+        });
+
+        function showRejectModal(requestId, userName) {
+            document.getElementById('reject-user-name').textContent = `Are you sure you want to reject the registration request for ${userName}?`;
+            document.getElementById('reject-form').action = `/RejectRegistration/${requestId}`;
+            document.getElementById('reject-modal').style.display = 'block';
+        }
+
+        function closeRejectModal() {
+            document.getElementById('reject-modal').style.display = 'none';
+            document.getElementById('rejection_reason').value = '';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('reject-modal');
+            if (event.target === modal) {
+                closeRejectModal();
+            }
+        }
+
+        // Navigation
+        document.querySelector('.nav-toggle').addEventListener('click', function() {
+            document.querySelector('.navbar').style.left = '0';
+        });
+
+        document.querySelector('.navbar').addEventListener('mouseleave', function() {
+            document.querySelector('.navbar').style.left = '-250px';
+        });
+    </script>
+</body>
+</html>
