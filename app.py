@@ -12,7 +12,7 @@ from AdminManagement import (
     reject_registration_request,
     get_registration_request_details
 )
-from UserManagement import get_users_paginated, update_user_status, get_user_by_id
+from UserManagement import get_users_paginated, update_user_status, get_user_by_id, get_expiring_passwords
 from EmailUser import send_email
 
 # Load environment variables from ..env file
@@ -51,13 +51,8 @@ def index():
             
             flash(f'Welcome back, {result["user_data"]["first_name"]}!', 'success')
             
-            # Redirect based on user role
-            if role == 'administrator':
-                return redirect(url_for('admin_dashboard'))
-            elif role == 'manager':
-                return redirect(url_for('manager_dashboard'))
-            else:  # accountant or default role
-                return redirect(url_for('accountant_dashboard'))
+            # All users go to the Home page regardless of role
+            return redirect(url_for('home'))
         else:
             flash(f'Sign in failed: {result["message"]}', 'error')
             return render_template('index.html')
@@ -282,7 +277,13 @@ def finish_sign_up():
         
 @app.route("/Home")
 def home():
-    return render_template('Home.html')
+    if 'user_id' not in session:
+        flash('Please sign in to access this page.', 'error')
+        return redirect(url_for('index'))
+    
+    return render_template('Home.html', 
+                         user_name=session.get('user_name'),
+                         user_role=session.get('user_role'))
 @app.route("/Users")
 def users():
     if 'user_id' not in session or session.get('user_role') != 'administrator':
@@ -290,6 +291,20 @@ def users():
         return redirect(url_for('index'))
     
     return render_template('Users.html')
+
+@app.route('/ExpiringPasswords')
+def expiring_passwords():
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        flash('Access denied. Administrator privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    # Get users with passwords expiring in the next 30 days
+    result = get_expiring_passwords(days_ahead=30)
+    
+    return render_template('ExpiringPasswords.html', 
+                         user_name=session.get('user_name'),
+                         users=result.get('users', []),
+                         total_count=result.get('total_count', 0))
 
 @app.route('/api/users')
 def api_users():

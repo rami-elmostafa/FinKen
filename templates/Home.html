@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-<!-- Header with Branding -->
+    <!-- Header with Branding -->
     <div class="header">
         <div class="branding">
             <div class="branding-content">
@@ -19,49 +19,105 @@
             </div>
         </div>
     </div>
-<!-- Navigation Menu -->
-<button class="nav-toggle">Toggle Navigation</button>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Navigation Menu -->
+    <button class="nav-toggle">Toggle Navigation</button>
     <nav class="navbar">
         <ul class="nav-list">
             <img src="{{ url_for('static', filename='images/finkenlogo.png') }}" alt="FinKen Logo" class="logo-image">
             <li class="active"><a href="/Home">Dashboard</a></li>
-            <li><a href="/Users">Users</a></li>
+            
+            <!-- Administrator-only options -->
+            {% if user_role == 'administrator' %}
+                <li><a href="/ManageRegistrations">Manage Registrations</a></li>
+                <li><a href="/Users">Users</a></li>
+                <li><a href="/ExpiringPasswords">Expiring Passwords</a></li>
+            {% endif %}
+            
+            <!-- Common options for all users -->
             <li><a href="#">Statements</a></li>
+            <li><a href="/SignOut">Sign Out</a></li>
         </ul>
     </nav>
 
-<script>
-    document.querySelector('.nav-toggle').addEventListener('click', function() {
-    document.querySelector('.navbar').style.left = '0';
-});
-
-document.querySelector('.navbar').addEventListener('mouseleave', function() {
-    document.querySelector('.navbar').style.left = '-250px';
-});
-</script>
-
-<!-- Main Content -->
-<div class="cards-container">
-    <div class="card">
-        <div class="card-header">
-            <h2>Accounting Ratios</h2>
-            <p>Date: 01/01/2022</p>
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Welcome Message -->
+        <div class="welcome-section">
+            <h1>Welcome back, {{ user_name }}!</h1>
+            <p class="user-role">Role: {{ user_role.title() }}</p>
         </div>
-        <div class="card-body">
-            <p>This is a sample</p>
+
+        <!-- Cards Container -->
+        <div class="cards-container">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Accounting Ratios</h2>
+                    <p>Date: 01/01/2022</p>
+                </div>
+                <div class="card-body">
+                    <p>This is a sample</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h2>Sample 2</h2>
+                    <p>Date: 01/01/2022</p>
+                </div>
+                <div class="card-body">
+                    <p>Yo what it do this is a sample 2</p>
+                </div>
+            </div>
+            
+            <!-- Administrator-specific cards -->
+            {% if user_role == 'administrator' %}
+                <div class="card admin-card">
+                    <div class="card-header">
+                        <h2>Admin Quick Actions</h2>
+                        <p>Management Tools</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="quick-actions">
+                            <a href="/ManageRegistrations" class="quick-action-btn">
+                                <i class="icon">📋</i>
+                                <span>Manage Registrations</span>
+                            </a>
+                            <a href="/Users" class="quick-action-btn">
+                                <i class="icon">👥</i>
+                                <span>View Users</span>
+                            </a>
+                            <a href="/ExpiringPasswords" class="quick-action-btn">
+                                <i class="icon">🔑</i>
+                                <span>Expiring Passwords</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
     </div>
-    <div class="card">
-        <div class="card-header">
-            <h2>Sample 2</h2>
-            <p>Date: 01/01/2022</p>
-        </div>
-        <div class="card-body">
-            <p>Yo what it do this is a sample 2</p>
-        </div>
-    </div>
-    <!-- Repeat the above card div for each card -->
-</div>
 
+    <script>
+        document.querySelector('.nav-toggle').addEventListener('click', function() {
+            document.querySelector('.navbar').style.left = '0';
+        });
+
+        document.querySelector('.navbar').addEventListener('mouseleave', function() {
+            document.querySelector('.navbar').style.left = '-250px';
+        });
+    </script>
 </body>
 </html>

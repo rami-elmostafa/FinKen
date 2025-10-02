@@ -1,14 +1,15 @@
 # UserManagement.py
 
 import os
+import math
+from datetime import datetime, timedelta
 from supabase import create_client, Client
 from dotenv import load_dotenv
-import math
 
 # Load environment variables
 load_dotenv()
 
-def get_users_paginated(page=1, per_page=20, search_term='', status_filter=''):
+def get_users_paginated(page=1, per_page=10, search_term='', status_filter=''):
     """
     Get users with pagination and filtering
     
@@ -275,4 +276,73 @@ def get_user_by_id(user_id):
         return {
             'success': False,
             'message': f'Error fetching user: {str(e)}'
+        }
+
+def get_expiring_passwords(days_ahead=30):
+    """
+    Get users whose passwords will expire within the specified number of days
+    
+    Args:
+        days_ahead (int): Number of days to look ahead for expiring passwords
+    
+    Returns:
+        dict: Contains users with expiring passwords and success status
+    """
+    try:
+        # Initialize Supabase client
+        supabase_url = os.environ.get('SUPABASE_URL')
+        supabase_key = os.environ.get('SUPABASE_ANON_KEY')
+        
+        if not supabase_url or not supabase_key:
+            return {
+                'success': False,
+                'message': 'Database configuration error - Supabase credentials not found'
+            }
+        
+        supabase: Client = create_client(supabase_url, supabase_key)
+        
+        # Calculate the cutoff date
+        cutoff_date = datetime.now() + timedelta(days=days_ahead)
+        cutoff_date_str = cutoff_date.isoformat()
+        
+        # Get users whose passwords expire within the specified timeframe
+        response = supabase.table('users').select(
+            'UserID, Username, FirstName, LastName, Email, PasswordExpiryDate, '
+            'IsActive, roles(RoleName)'
+        ).lte('PasswordExpiryDate', cutoff_date_str).eq('IsActive', True).order('PasswordExpiryDate').execute()
+        
+        if not response.data:
+            users = []
+        else:
+            users = []
+            for user in response.data:
+                # Only include users that actually have a password expiry date
+                if user.get('PasswordExpiryDate'):
+                    expiry_date = datetime.fromisoformat(user['PasswordExpiryDate'].replace('Z', '+00:00'))
+                    days_until_expiry = (expiry_date - datetime.now()).days
+                    
+                    user_data = {
+                        'UserID': user.get('UserID'),
+                        'Username': user.get('Username'),
+                        'FirstName': user.get('FirstName'),
+                        'LastName': user.get('LastName'),
+                        'Email': user.get('Email'),
+                        'PasswordExpiryDate': user.get('PasswordExpiryDate'),
+                        'DaysUntilExpiry': days_until_expiry,
+                        'RoleName': user.get('roles', {}).get('RoleName') if user.get('roles') else 'Unknown',
+                        'IsExpired': days_until_expiry < 0,
+                        'IsExpiringSoon': 0 <= days_until_expiry <= 7
+                    }
+                    users.append(user_data)
+        
+        return {
+            'success': True,
+            'users': users,
+            'total_count': len(users)
+        }
+        
+    except Exception as e:
+        return {
+            'success': False,
+            'message': f'Error fetching expiring passwords: {str(e)}'
         }
