@@ -6,6 +6,8 @@ from passwordHash import hash_password
 from dotenv import load_dotenv
 load_dotenv()
 
+#This is the function to create a new user in the database
+
 def create_new_user(first_name, last_name, email, dob):
     """
     Create a new user registration request in the Supabase database.
