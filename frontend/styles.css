@@ -1147,7 +1147,8 @@ body {
 }
 
 .modal-content .form-group input,
-.modal-content .form-group textarea {
+.modal-content .form-group textarea,
+.modal-content .form-group select {
     width: 100%;
     padding: 10px 12px;
     border: 1px solid #ddd;
@@ -1158,7 +1159,8 @@ body {
 }
 
 .modal-content .form-group input:focus,
-.modal-content .form-group textarea:focus {
+.modal-content .form-group textarea:focus,
+.modal-content .form-group select:focus {
     outline: none;
     border-color: #007bff;
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
@@ -1167,6 +1169,17 @@ body {
 .modal-content .form-group textarea {
     resize: vertical;
     min-height: 120px;
+}
+
+.modal-content .form-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.modal-content .form-row .form-group {
+    flex: 1;
+    margin-bottom: 0;
 }
 
 .modal-content .btn-container {

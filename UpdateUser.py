@@ -24,7 +24,11 @@ def update_user(
     Returns:
         dict: The updated user record or error message.
     """
-    #Attemp to initialize Supabase client
+    # Validate user_id
+    if user_id is None:
+        return {"success": False, "message": "User ID is required"}
+    
+    #Attempt to initialize Supabase client
     try:
         supabase_url = os.environ.get('SUPABASE_URL')
         supabase_key = os.environ.get('SUPABASE_ANON_KEY')
@@ -34,30 +38,33 @@ def update_user(
         
         supabase: Client = create_client(supabase_url, supabase_key)
     except Exception as e:
-        return {"error": f"Error initializing Supabase client: {str(e)}"}
+        return {"success": False, "message": f"Error initializing Supabase client: {str(e)}"}
     
     #Determine which fields to update
     try:
         update_data = {}
-        if first_name is not None:
-            update_data[first_name] = first_name
-        if last_name is not None:
-            update_data[last_name] = last_name
-        if email is not None:
-            update_data[email] = email
-        if dob is not None:
-            update_data[dob] = dob
+        if first_name is not None and first_name.strip():
+            update_data['FirstName'] = first_name.strip()
+        if last_name is not None and last_name.strip():
+            update_data['LastName'] = last_name.strip()
+        if email is not None and email.strip():
+            update_data['Email'] = email.strip()
+        if dob is not None and dob.strip():
+            update_data['DOB'] = dob.strip()
         if address is not None:
-            update_data[address] = address
+            update_data['Address'] = address.strip() if address.strip() else None
         if roleid is not None:
-            update_data[roleid] = roleid
+            update_data['RoleID'] = roleid
+            
         if not update_data:
-            return {"error": "No fields to update."}
+            return {"success": False, "message": "No fields to update"}
         
         response = supabase.table("users").update(update_data).eq("UserID", user_id).execute()
-        if response.data:
-            return {"success": True, "data": response.data[0]}
+        
+        if response.data and len(response.data) > 0:
+            return {"success": True, "message": "User updated successfully", "data": response.data[0]}
         else:
-            return {"error": "User not found or no changes made."}
+            return {"success": False, "message": "User not found or no changes made"}
+            
     except Exception as e:
-        return {"error": str(e)}
+        return {"success": False, "message": f"Database error: {str(e)}"}

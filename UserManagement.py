@@ -234,8 +234,8 @@ def get_user_by_id(user_id):
         
         # Get the user
         response = supabase.table('users').select(
-            'UserID, Username, FirstName, LastName, Email, DOB, Address, '
-            'IsActive, IsSuspended, DateCreated, roles(RoleName)'
+            'UserID, Username, FirstName, LastName, Email, DOB, Address, RoleID, '
+            'IsActive, IsSuspended, DateCreated, roles(RoleID, RoleName)'
         ).eq('UserID', user_id).execute()
         
         if response.data and len(response.data) > 0:
@@ -257,6 +257,7 @@ def get_user_by_id(user_id):
                 'Email': user.get('Email'),
                 'DOB': user.get('DOB'),
                 'Address': user.get('Address'),
+                'RoleID': user.get('RoleID'),
                 'Status': status,
                 'RoleName': user.get('roles', {}).get('RoleName') if user.get('roles') else 'Unknown',
                 'DateCreated': user.get('DateCreated')
@@ -345,4 +346,44 @@ def get_expiring_passwords(days_ahead=30):
         return {
             'success': False,
             'message': f'Error fetching expiring passwords: {str(e)}'
+        }
+
+def get_all_roles():
+    """
+    Get all available roles from the database
+    
+    Returns:
+        dict: Contains roles data and success status
+    """
+    try:
+        # Initialize Supabase client
+        supabase_url = os.environ.get('SUPABASE_URL')
+        supabase_key = os.environ.get('SUPABASE_ANON_KEY')
+        
+        if not supabase_url or not supabase_key:
+            return {
+                'success': False,
+                'message': 'Database configuration error - Supabase credentials not found'
+            }
+        
+        supabase: Client = create_client(supabase_url, supabase_key)
+        
+        # Get all roles
+        response = supabase.table('roles').select('RoleID, RoleName').order('RoleName').execute()
+        
+        if response.data:
+            return {
+                'success': True,
+                'roles': response.data
+            }
+        else:
+            return {
+                'success': True,
+                'roles': []
+            }
+            
+    except Exception as e:
+        return {
+            'success': False,
+            'message': f'Error fetching roles: {str(e)}'
         }

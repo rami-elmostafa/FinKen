@@ -12,7 +12,8 @@ from AdminManagement import (
     reject_registration_request,
     get_registration_request_details
 )
-from UserManagement import get_users_paginated, update_user_status, get_user_by_id, get_expiring_passwords
+from UserManagement import get_users_paginated, update_user_status, get_user_by_id, get_expiring_passwords, get_all_roles
+from UpdateUser import update_user
 from EmailUser import send_email
 
 # Load environment variables from ..env file
@@ -408,6 +409,91 @@ def send_email_api():
         return jsonify({
             'success': False,
             'message': f'Error sending email: {str(e)}'
+        }), 500
+
+@app.route('/api/users/<int:user_id>', methods=['GET'])
+def get_user_details_api(user_id):
+    """API endpoint to get detailed user information for editing"""
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    result = get_user_by_id(user_id)
+    return jsonify(result)
+
+@app.route('/api/roles', methods=['GET'])
+def get_roles_api():
+    """API endpoint to get all available roles"""
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    result = get_all_roles()
+    return jsonify(result)
+
+@app.route('/api/users/<int:user_id>', methods=['PUT'])
+def update_user_api(user_id):
+    """API endpoint to update user information"""
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'No data provided'
+            }), 400
+        
+        # Extract user data from request
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+        email = data.get('email')
+        dob = data.get('dob')
+        address = data.get('address')
+        role_id = data.get('role_id')
+        
+        # Convert empty strings to None for optional fields
+        if dob == '':
+            dob = None
+        if address == '':
+            address = None
+        if role_id == '' or role_id == 'null':
+            role_id = None
+        
+        # Convert role_id to int if provided
+        if role_id is not None:
+            try:
+                role_id = int(role_id)
+            except (ValueError, TypeError):
+                return jsonify({
+                    'success': False,
+                    'message': 'Invalid role ID'
+                }), 400
+        
+        # Validate required fields
+        if not first_name or not last_name or not email:
+            return jsonify({
+                'success': False,
+                'message': 'First name, last name, and email are required'
+            }), 400
+        
+        # Update the user
+        result = update_user(
+            user_id=user_id,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            dob=dob,
+            address=address,
+            roleid=role_id
+        )
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error updating user: {str(e)}'
         }), 500
 
 if __name__ == '__main__':

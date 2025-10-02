@@ -139,6 +139,51 @@
         </div>
     </div>
 
+    <!-- Edit User Modal -->
+    <div id="edit-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="close" id="close-edit-modal">&times;</span>
+            <h2>Edit User Information</h2>
+            <form id="edit-form">
+                <input type="hidden" id="edit-user-id" name="user_id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-first-name">First Name:</label>
+                        <input type="text" id="edit-first-name" name="first_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-last-name">Last Name:</label>
+                        <input type="text" id="edit-last-name" name="last_name" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="edit-email">Email:</label>
+                    <input type="email" id="edit-email" name="email" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-dob">Date of Birth:</label>
+                        <input type="date" id="edit-dob" name="dob">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-role">Role:</label>
+                        <select id="edit-role" name="role_id" required>
+                            <option value="">Loading roles...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="edit-address">Address:</label>
+                    <textarea id="edit-address" name="address" rows="3" placeholder="Enter full address"></textarea>
+                </div>
+                <div class="btn-container">
+                    <button type="button" class="btn btn-secondary" id="cancel-edit">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         let currentPage = 1;
         let currentSearch = '';
@@ -215,6 +260,11 @@
         function createActionButtons(user) {
             let buttons = `<div class="action-buttons">`;
             
+            // Edit button (only for admins)
+            buttons += `<button type="button" class="btn btn-small btn-secondary edit-btn" 
+                        data-user-id="${user.UserID}" 
+                        data-user-name="${user.FirstName} ${user.LastName}">Edit</button>`;
+            
             // Email button
             buttons += `<button type="button" class="btn btn-small btn-primary email-btn" 
                         data-user-id="${user.UserID}" 
@@ -245,6 +295,15 @@
 
         // Attach event listeners to action buttons
         function attachActionListeners() {
+            // Edit buttons
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.dataset.userId;
+                    const userName = this.dataset.userName;
+                    showEditModal(userId, userName);
+                });
+            });
+            
             // Email buttons
             document.querySelectorAll('.email-btn').forEach(button => {
                 button.addEventListener('click', function() {
@@ -315,6 +374,88 @@
             currentPage = pagination.current_page;
         }
 
+        // Edit modal functions
+        let rolesLoaded = false;
+        let availableRoles = [];
+
+        async function loadRoles() {
+            if (rolesLoaded) return;
+            
+            try {
+                const response = await fetch('/api/roles');
+                const data = await response.json();
+                
+                if (data.success) {
+                    availableRoles = data.roles;
+                    rolesLoaded = true;
+                    populateRoleSelect();
+                } else {
+                    console.error('Error loading roles:', data.message);
+                }
+            } catch (error) {
+                console.error('Error loading roles:', error);
+            }
+        }
+
+        function populateRoleSelect() {
+            const select = document.getElementById('edit-role');
+            select.innerHTML = '<option value="">Select a role...</option>';
+            
+            availableRoles.forEach(role => {
+                const option = document.createElement('option');
+                option.value = role.RoleID;
+                option.textContent = role.RoleName;
+                select.appendChild(option);
+            });
+        }
+
+        async function showEditModal(userId, userName) {
+            // Load roles if not already loaded
+            await loadRoles();
+            
+            try {
+                // Fetch user data
+                const response = await fetch(`/api/users/${userId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const user = data.user;
+                    
+                    // Populate form fields
+                    document.getElementById('edit-user-id').value = user.UserID;
+                    document.getElementById('edit-first-name').value = user.FirstName || '';
+                    document.getElementById('edit-last-name').value = user.LastName || '';
+                    document.getElementById('edit-email').value = user.Email || '';
+                    document.getElementById('edit-dob').value = user.DOB || '';
+                    document.getElementById('edit-address').value = user.Address || '';
+                    
+                    // Set role selection
+                    const roleSelect = document.getElementById('edit-role');
+                    if (user.RoleID) {
+                        roleSelect.value = user.RoleID;
+                    } else {
+                        // Fallback: try to find by role name
+                        const userRole = availableRoles.find(role => role.RoleName === user.RoleName);
+                        if (userRole) {
+                            roleSelect.value = userRole.RoleID;
+                        }
+                    }
+                    
+                    // Show modal
+                    document.getElementById('edit-modal').style.display = 'block';
+                } else {
+                    alert('Error loading user data: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                alert('Error loading user data');
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').style.display = 'none';
+        }
+
         // Email modal functions
         function showEmailModal(email, name) {
             document.getElementById('email-recipient').value = email;
@@ -360,6 +501,55 @@
             // Email modal events
             document.getElementById('close-email-modal').addEventListener('click', closeEmailModal);
             document.getElementById('cancel-email').addEventListener('click', closeEmailModal);
+            
+            // Edit modal events
+            document.getElementById('close-edit-modal').addEventListener('click', closeEditModal);
+            document.getElementById('cancel-edit').addEventListener('click', closeEditModal);
+            
+            // Edit form submission
+            document.getElementById('edit-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const userId = formData.get('user_id');
+                const data = {
+                    first_name: formData.get('first_name'),
+                    last_name: formData.get('last_name'),
+                    email: formData.get('email'),
+                    dob: formData.get('dob') || null,
+                    address: formData.get('address') || null,
+                    role_id: formData.get('role_id') || null
+                };
+                
+                console.log('Sending data:', data); // Debug log
+                
+                try {
+                    const response = await fetch(`/api/users/${userId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    console.log('Response status:', response.status); // Debug log
+                    
+                    const result = await response.json();
+                    console.log('Response data:', result); // Debug log
+                    
+                    if (result.success) {
+                        alert('User updated successfully!');
+                        closeEditModal();
+                        // Reload current page to show updated data
+                        loadUsers(currentPage, currentSearch, currentStatus);
+                    } else {
+                        alert('Error updating user: ' + (result.message || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Error updating user:', error);
+                    alert('Error updating user: ' + error.message);
+                }
+            });
             
             // Email form submission
             document.getElementById('email-form').addEventListener('submit', async function(e) {
@@ -408,8 +598,12 @@
         // Close modal when clicking outside
         window.onclick = function(event) {
             const emailModal = document.getElementById('email-modal');
+            const editModal = document.getElementById('edit-modal');
+            
             if (event.target === emailModal) {
                 closeEmailModal();
+            } else if (event.target === editModal) {
+                closeEditModal();
             }
         }
     </script>
