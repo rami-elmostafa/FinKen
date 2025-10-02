@@ -13,78 +13,79 @@ body {
     color: #333;
     background: #ffffff;
     min-height: 100vh;
+    margin: 0;
+    background: linear-gradient(180deg, #FFF, #888);
 }
 
-/* Header with Branding in Top Right */
+/* Header with Branding in Top Middle */
 .header {
-    position: absolute;
-    top: 2rem;
-    right: 2rem;
-    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
 }
 
 .branding-content {
     display: flex;
     align-items: center;
-    gap: 1rem;
 }
 
 .branding-text h1 {
-    font-size: 1.8rem;
+    font-size: 2.5rem;
     font-weight: 600;
     margin-bottom: 0.25rem;
     text-align: left;
 }
 
-.fin-text {
+.pocket-text {
     color: #000000;
 }
 
-.ken-text {
-    color: #FFD100;
+.watch-text {
+    color: #FFC900;
 }
 
 .branding-text p {
     color: #000000;
-    font-size: 0.85rem;
+    font-size: 1rem;
     font-weight: 400;
     text-align: left;
 }
 
 .logo-image {
-    height: 6rem;
+    height: 10rem;
     width: auto;
     object-fit: contain;
 }
 
 .container {
     width: 100%;
-    max-width: 400px;
+    max-width: 500px;
     margin: 0 auto;
     padding: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
+    min-height: 20vh;
 }
 
 /* Login Container */
 .login-container {
     background: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 2px solid #e0e0e0;
+    border-radius: 25px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
     width: 100%;
 }
 
 .login-form {
-    padding: 3rem 2.5rem;
+    padding: 3rem 4rem;
 }
 
 /* Form Header */
 .login-form h2 {
     color: #333;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     margin-bottom: 2rem;
     text-align: center;
     font-weight: 500;
@@ -129,7 +130,7 @@ body {
     display: inline-block;
     padding: 0.875rem 1.5rem;
     border: none;
-    border-radius: 4px;
+    border-radius: 10px;
     font-size: 0.95rem;
     font-weight: 500;
     text-align: center;
@@ -137,7 +138,7 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
     width: 100%;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
 }
 
 .btn:hover {
@@ -148,7 +149,7 @@ body {
 .btn-primary {
     background-color: #FFD100;
     color: #333;
-    border: 1px solid #FFD100;
+    border: 1px solid #FFC900;
     font-weight: 600;
 }
 
@@ -159,7 +160,7 @@ body {
 
 .btn-secondary {
     background-color: transparent;
-    color: #666;
+    color: #444;
     border: 1px solid #ddd;
 }
 
@@ -170,7 +171,7 @@ body {
 
 .btn-link {
     background: none;
-    color: #666;
+    color: #444;
     border: none;
     text-decoration: none;
     padding: 0.75rem;
@@ -305,7 +306,7 @@ body {
     margin: 50px auto;
     padding: 30px;
     background: white;
-    border-radius: 10px;
+    border-radius: 25px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -320,7 +321,8 @@ body {
 }
 
 .form-container .form-group {
-    margin-bottom: 20px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 .form-container .form-group label {
@@ -334,8 +336,9 @@ body {
 .form-container .form-group select {
     width: 100%;
     padding: 12px;
+
     border: 2px solid #ddd;
-    border-radius: 6px;
+    border-radius: 12px;
     font-size: 16px;
     transition: border-color 0.3s;
 }
@@ -343,7 +346,7 @@ body {
 .form-container .form-group input:focus,
 .form-container .form-group select:focus {
     outline: none;
-    border-color: #4CAF50;
+    border-color: #e6bc00;
 }
 
 .btn-container {
@@ -369,12 +372,13 @@ body {
 }
 
 .form-container .btn-primary {
-    background-color: #4CAF50;
+    background-color: #333;
     color: white;
 }
 
 .form-container .btn-primary:hover {
-    background-color: #45a049;
+    background-color: #e6bc00;
+    color: black;
 }
 
 .form-container .btn-secondary {
@@ -387,8 +391,10 @@ body {
 }
 
 .header-title {
+    font-size: 1.8rem;
     text-align: center;
-    margin-bottom: 30px;
+    font-weight: 600;
+    margin-bottom: 20px;
     color: #333;
 }
 
@@ -400,4 +406,166 @@ body {
     font-size: 14px;
     color: #666;
     margin-top: 5px;
+}
+/*Forgot Password Styles*/
+.forgot-password-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.forgot-password-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.forgot-password-form h2 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 10px;
+}
+.forgot-password-container .btn-secondary{
+    background-color: #6c757d;
+    color: white;
+}
+.forgot-password-container .btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+/*Nav Styles*/
+.navbar {
+    position: fixed;
+    top: 0;
+    left: -250px;
+    width: 250px;
+    height: 100vh;
+    background-color: #555;
+    color: #fff;
+    transition: left 0.3s ease;
+}
+
+.nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-list li a {
+    display: block;
+    padding: 15px;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.nav-list li a:hover {
+    background-color: #444;
+}
+
+.nav-toggle {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    transition: background-color 0.3s;
+    width: auto;
+    margin-bottom: 0;
+    background-color: #e6bc00;
+    color: black;
+}
+.nav-list .active a {
+    background-color: #e6bc00;
+    color: #333;
+}
+
+/*Dashboard Card Styles*/
+.cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    padding: 20px;
+}
+
+.card {
+    width: 300px;
+    border: 1px solid #000;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px;
+}
+
+.card-header {
+    background-color: #333;
+    color: #fff;
+    padding: 15px;
+    text-align: Left;
+}
+
+.card-body {
+    background-color: #e6bc00;
+    Text-align: center;
+    color: Black;
+    font-size: 18px;
+    font-weight: 600;
+    padding: 15px;
+}
+
+/* Search and Filter Styles */
+.search-filter {
+    display: flex;
+    gap: 150px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.search-filter input,
+.search-filter select {
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+/* User List Styles */
+.user-header{
+    Text-align: center;
+    font-size: 4rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+}
+.user-list-container {
+    justify-content: center;
+    padding: 20px;
+}
+.user-list {
+    margin-bottom: 20px;
+}
+
+.user-list table {
+    width: 90%;
+    margin: 0 auto;
+}
+
+.user-list table th,
+.user-list table td {
+    padding: 15px;
+    border: 1px solid #bbb;
+}
+
+.user-list table th {
+    background-color: #f2f2f2;
+    font-size: 20px;
+    font-weight: 600;
 }

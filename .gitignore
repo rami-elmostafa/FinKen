@@ -3,9 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Virtual env
+# Virtual .env
 venv/
-env/
+.env/
 
 # VS Code
 .vscode/
@@ -149,9 +149,9 @@ celerybeat.pid
 .env
 .envrc
 .venv
-env/
+.env/
 venv/
-ENV/
+.env/
 env.bak/
 venv.bak/
 

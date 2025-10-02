@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinKen - Financial Accounting System</title>
+    <title>PocketWatch - Financial Accounting System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
@@ -12,10 +12,10 @@
         <div class="branding">
             <div class="branding-content">
                 <img src="{{ url_for('static', filename='images/finkenlogo.png') }}" alt="FinKen Logo" class="logo-image">
-                <div class="branding-text">
-                    <h1><span class="fin-text">Pocket</span><span class="ken-text">Watch</span></h1>
-                    <p>Financial Accounting App</p>
-                </div>
+                    <div class="branding-text">
+                    <h1><span class="pocket-text">Pocket</span><span class="watch-text">Watch</span></h1>
+                        <p>Financial Accounting Application</p>
+                    </div>
             </div>
         </div>
     </div>
@@ -40,17 +40,18 @@
             <div class="login-form">
                 <h2>Sign In</h2>
 
-                <form action="#" method="POST">
+                <form action="{{ url_for('index') }}" method="POST">
                     <div class="form-group">
                         <label for="username">Username</label>
                         <input type="text" id="username" name="username" 
-                               placeholder="Enter your username">
+                               placeholder="Enter your username"
+                               value="{{ request.form.get('username', '') }}">
                     </div>
                     
                     <div class="form-group">
                         <label for="password">Password</label>
                         <input type="password" id="password" name="password" 
-                               placeholder="Enter your password">
+                               placeholder="Enter your password" required>
                     </div>
                     
                     <button type="submit" class="btn btn-primary">Sign In</button>

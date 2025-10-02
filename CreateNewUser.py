@@ -44,7 +44,7 @@ def create_new_user(first_name, last_name, email, dob):
         }
         
         # Insert data into RegistrationRequests table
-        response = supabase.table('RegistrationRequests').insert(user_data).execute()
+        response = supabase.table('registration_requests').insert(user_data).execute()
         
         if response.data:
             return {
