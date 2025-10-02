@@ -510,6 +510,7 @@ body {
     background-color: #555;
     color: #fff;
     transition: left 0.3s ease;
+    z-index: 9999;
 }
 
 .nav-list {
@@ -547,6 +548,7 @@ body {
     margin-bottom: 0;
     background-color: #e6bc00;
     color: black;
+    z-index: 10000;
 }
 .nav-list .active a {
     background-color: #e6bc00;
@@ -603,7 +605,7 @@ body {
 
 /* User List Styles */
 .user-header{
-    Text-align: center;
+    text-align: center;
     font-size: 4rem;
     font-weight: 600;
     margin-bottom: 10px;
@@ -612,26 +614,38 @@ body {
 .user-list-container {
     justify-content: center;
     padding: 20px;
+    max-width: 95%;
+    margin: 0 auto;
 }
 .user-list {
     margin-bottom: 20px;
+    overflow-x: auto;
 }
 
 .user-list table {
-    width: 90%;
+    width: 100%;
+    min-width: 1200px;
     margin: 0 auto;
+    border-collapse: collapse;
 }
 
 .user-list table th,
 .user-list table td {
-    padding: 15px;
+    padding: 12px 8px;
     border: 1px solid #bbb;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 120px;
 }
 
 .user-list table th {
     background-color: #f2f2f2;
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 /* User Info Display Styles for FinishSignUp */
@@ -656,7 +670,7 @@ body {
 
 /* Admin Dashboard Styles */
 .admin-container {
-    max-width: 1200px;
+    max-width: 95%;
     margin: 20px auto;
     padding: 20px;
 }
@@ -690,30 +704,95 @@ body {
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
+    overflow-x: auto;
     margin-top: 20px;
+    width: 100%;
 }
 
 .requests-table table {
     width: 100%;
+    min-width: 1200px;
     border-collapse: collapse;
+    table-layout: auto;
 }
 
 .requests-table table th,
 .requests-table table td {
-    padding: 12px 15px;
+    padding: 12px 8px;
     text-align: left;
     border-bottom: 1px solid #eee;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 120px;
 }
 
 .requests-table table th {
     background-color: #f8f9fa;
     font-weight: 600;
     color: #333;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 .requests-table table tr:hover {
     background-color: #f8f9fa;
+}
+
+/* Specific column widths for better data display */
+.requests-table table th:nth-child(1),
+.requests-table table td:nth-child(1) {
+    min-width: 80px; /* User/Request ID */
+}
+
+.requests-table table th:nth-child(2),
+.requests-table table td:nth-child(2) {
+    min-width: 120px; /* Username */
+}
+
+.requests-table table th:nth-child(3),
+.requests-table table td:nth-child(3) {
+    min-width: 150px; /* Name */
+}
+
+.requests-table table th:nth-child(4),
+.requests-table table td:nth-child(4) {
+    min-width: 200px; /* Email */
+}
+
+.requests-table table th:nth-child(5),
+.requests-table table td:nth-child(5) {
+    min-width: 120px; /* DOB */
+}
+
+.requests-table table th:nth-child(6),
+.requests-table table td:nth-child(6) {
+    min-width: 200px; /* Address */
+    max-width: 250px;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.requests-table table th:nth-child(7),
+.requests-table table td:nth-child(7) {
+    min-width: 100px; /* Role */
+}
+
+.requests-table table th:nth-child(8),
+.requests-table table td:nth-child(8) {
+    min-width: 100px; /* Status */
+}
+
+.requests-table table th:nth-child(9),
+.requests-table table td:nth-child(9) {
+    min-width: 120px; /* Date */
+}
+
+.requests-table table th:nth-child(10),
+.requests-table table td:nth-child(10) {
+    min-width: 180px; /* Actions */
+    text-align: center;
 }
 
 /* Status Badges */
@@ -1011,14 +1090,28 @@ body {
 /* Action Buttons Styling */
 .action-buttons {
     display: flex;
-    gap: 5px;
+    gap: 3px;
     flex-wrap: wrap;
+    justify-content: center;
+    min-width: 180px;
+}
+
+.action-buttons form {
+    flex: 1;
+    display: flex;
+}
+
+.action-buttons form button {
+    width: 100%;
+    flex: 1;
 }
 
 .btn-small {
-    padding: 4px 8px;
-    font-size: 12px;
+    padding: 4px 6px;
+    font-size: 11px;
     min-width: auto;
+    white-space: nowrap;
+    flex: 1;
 }
 
 .btn-primary {
@@ -1175,11 +1268,13 @@ body {
 @media (max-width: 768px) {
     .admin-container {
         padding: 10px;
+        max-width: 98%;
     }
     
     .filter-controls {
         flex-direction: column;
         align-items: stretch;
+        gap: 10px;
     }
     
     .filter-controls input {
@@ -1188,14 +1283,53 @@ body {
     
     .action-buttons {
         flex-direction: column;
+        gap: 2px;
+    }
+    
+    .action-buttons form {
+        width: 100%;
+    }
+    
+    .action-buttons form button {
+        width: 100%;
     }
     
     .requests-table {
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .requests-table table {
+        min-width: 1000px;
+    }
+    
+    .requests-table table th,
+    .requests-table table td {
+        padding: 8px 6px;
+        font-size: 12px;
+    }
+    
+    .btn-small {
+        padding: 3px 5px;
+        font-size: 10px;
     }
     
     .modal-content {
         margin: 10% auto;
         width: 95%;
+        max-width: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-container {
+        padding: 5px;
+        max-width: 100%;
+    }
+    
+    .requests-table table th,
+    .requests-table table td {
+        padding: 6px 4px;
+        font-size: 11px;
     }
 }
