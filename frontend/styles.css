@@ -352,7 +352,12 @@ body {
 .login-container {
     animation: fadeIn 0.5s ease-out;
 }
-
+.forgot-password-container{
+    animation: fadeIn 0.5s ease-out;
+}
+.form-container{
+    animation: fadeIn 0.5s ease-out;
+}
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -574,6 +579,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 .forgot-password-form h2 {
     font-size: 1.6rem;

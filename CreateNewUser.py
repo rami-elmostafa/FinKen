@@ -9,7 +9,7 @@ load_dotenv()
 
 #This is the function to create a new user in the database
 
-def create_new_user(first_name, last_name, email, dob):
+def create_new_user(first_name, last_name, email, dob, address):
     """
     Create a new user registration request in the Supabase database.
     
@@ -18,6 +18,7 @@ def create_new_user(first_name, last_name, email, dob):
         last_name (str): User's last name
         email (str): User's email address
         dob (str): User's date of birth (YYYY-MM-DD format)
+        address (str): User's address
         
     Returns:
         dict: Response from the database insertion
@@ -43,7 +44,7 @@ def create_new_user(first_name, last_name, email, dob):
             'LastName': last_name.strip(),
             'Email': email.strip().lower(),
             'DOB': dob,
-            'Address': '',  # Empty for now since we don't collect address in the form
+            'Address': address,
             'RequestDate': datetime.now().isoformat()
         } 
         # Insert data into RegistrationRequests table
@@ -76,7 +77,7 @@ def create_new_user(first_name, last_name, email, dob):
     
 
 
-def validate_user_input(first_name, last_name, email, dob):
+def validate_user_input(first_name, last_name, email, dob, address):
     """
     Validate user input before creating the user.
     
@@ -85,6 +86,7 @@ def validate_user_input(first_name, last_name, email, dob):
         last_name (str): User's last name
         email (str): User's email address
         dob (str): User's date of birth
+        address (str): User's address
         
     Returns:
         dict: Validation result with success flag and message
@@ -115,7 +117,10 @@ def validate_user_input(first_name, last_name, email, dob):
                 errors.append("You must be at least 16 years old to register")
         except ValueError:
             errors.append("Date of birth must be in YYYY-MM-DD format")
-    
+
+    if not address or not address.strip():
+        errors.append("Address is required")
+
     if errors:
         return {
             'success': False,
