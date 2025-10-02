@@ -32,7 +32,7 @@ def create_new_user(first_name, last_name, email, dob, address):
         if not supabase_url or not supabase_key:
             raise ValueError("Supabase URL and API key must be set in environment variables")
         
-        result = validate_user_input(first_name, last_name, email, dob)
+        result = validate_user_input(first_name, last_name, email, dob, address)
         if not result.get('success', False):
             raise ValueError(result.get('message', 'Invalid user input'))
         
@@ -44,7 +44,7 @@ def create_new_user(first_name, last_name, email, dob, address):
             'LastName': last_name.strip(),
             'Email': email.strip().lower(),
             'DOB': dob,
-            'Address': address,
+            'Address': address.strip(),
             'RequestDate': datetime.now().isoformat()
         } 
         # Insert data into RegistrationRequests table

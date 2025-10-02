@@ -94,12 +94,12 @@ def create_new_user_route():
         first_name = request.form.get('first_name')
         last_name = request.form.get('last_name')
         email = request.form.get('email')
-        address = request.form.get('address')
         dob = request.form.get('dob')
+        address = request.form.get('address')
         
         # Validate input
         validation_result = validate_user_input(
-            first_name, last_name, email, dob
+            first_name, last_name, email, dob, address
         )
         
         if not validation_result['success']:
