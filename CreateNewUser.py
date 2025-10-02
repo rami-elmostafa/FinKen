@@ -25,10 +25,14 @@ def create_new_user(first_name, last_name, email, dob):
         if not supabase_url or not supabase_key:
             raise ValueError("Supabase URL and API key must be set in environment variables")
         
+        result = validate_user_input(first_name, last_name, email, dob)
+        if not result.get('success', False):
+            raise ValueError(result.get('message', 'Invalid user input'))
+        
         supabase: Client = create_client(supabase_url, supabase_key)
         
         # Prepare and insert data into RegistrationRequests table
-        user_data = dataPrep()
+        user_data = dataPrep(first_name, last_name, email, dob, None)
         response = supabase.table('RegistrationRequests').insert(user_data).execute()
 
         if response.data:
@@ -50,19 +54,20 @@ def create_new_user(first_name, last_name, email, dob):
         }
     
     
-def dataPrep(first_name, last_name, email, dob, username):
+def dataPrep(first_name, last_name, email, dob):
     """
     Prepare and validate user data for insertion.
 
-    This inner helper builds the dict to be inserted and performs
-    a lightweight validation of the date format. It returns the
-    prepared dict instead of mutating a parameter.
+    Args:
+        first_name (str): User's first name
+        last_name (str): User's last name
+        email (str): User's email address
+        dob (str): User's date of birth (YYYY-MM-DD format)
+    Returns:
+        dict: Prepared user data
     """
-    # Validate date of birth format
-    try:
-        datetime.strptime(dob, '%Y-%m-%d')
-    except ValueError:
-        raise ValueError("Date of birth must be in YYYY-MM-DD format")
+    
+    # Validate user data
 
     # Prepare user data for insertion
     user_data = {
@@ -77,17 +82,6 @@ def dataPrep(first_name, last_name, email, dob, username):
 
     return user_data
 
-
-def dobValidate(dob):
-    """
-    Validate the date of birth to ensure it's in the correct format.
-
-    Args:
-        dob (str): Date of birth in YYYY-MM-DD format
-    
-    Returns:
-        dob (str): Validated date of birth
-    """
 
 def validate_user_input(first_name, last_name, email, dob):
     """
