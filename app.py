@@ -159,6 +159,10 @@ def finish_sign_up():
                                    security_questions=questions)
         
         
+@app.route("/Home")
+def home():
+    return render_template('Home.html')
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))
     app.run(host='0.0.0.0', port=port)
