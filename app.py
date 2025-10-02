@@ -1,10 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory
 import os
 from dotenv import load_dotenv
 from CreateNewUser import create_new_user, validate_user_input
 from SignInUser import sign_in_user, validate_sign_in_input
 from FinishSignUp import get_signup_context, finalize_signup
-from ProfilePictureHandler import save_user_profile_picture
+from ProfilePictureHandler import save_user_profile_picture, get_user_profile_picture
 from AdminManagement import (
     get_pending_registration_requests, 
     get_all_registration_requests,
@@ -20,6 +20,32 @@ load_dotenv()
 
 app = Flask(__name__, static_folder='frontend')
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here')  # For flash messages
+
+def get_user_context():
+    """Helper function to get user context for templates"""
+    if 'user_id' not in session:
+        return {}
+    
+    # Get user profile picture
+    profile_result = get_user_profile_picture(session.get('user_id'))
+    profile_picture = 'default_profile.webp'  # Default fallback
+    if profile_result.get('success') and profile_result.get('profile_picture'):
+        profile_picture = profile_result.get('profile_picture')
+    
+    return {
+        'user_name': session.get('username'),  # Use username instead of full name
+        'user_role': session.get('user_role'),
+        'user_profile_picture': profile_picture
+    }
+
+@app.route('/profile_images/<filename>')
+def profile_image(filename):
+    """Serve profile images from the profile_images directory"""
+    try:
+        return send_from_directory('profile_images', filename)
+    except FileNotFoundError:
+        # If the requested file doesn't exist, serve the default profile picture
+        return send_from_directory('profile_images', 'default_profile.webp')
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -134,12 +160,13 @@ def manage_registrations():
         status_filter=status_filter
     )
     
+    user_context = get_user_context()
     return render_template('ManageRegistrations.html', 
-                         user_name=session.get('user_name'),
                          requests=result.get('requests', []),
                          pagination=result.get('pagination', {}),
                          current_search=search_term,
-                         current_status=status_filter)
+                         current_status=status_filter,
+                         **user_context)
 
 @app.route('/ApproveRegistration/<int:request_id>', methods=['POST'])
 def approve_registration(request_id):
@@ -281,16 +308,16 @@ def home():
         flash('Please sign in to access this page.', 'error')
         return redirect(url_for('index'))
     
-    return render_template('Home.html', 
-                         user_name=session.get('user_name'),
-                         user_role=session.get('user_role'))
+    user_context = get_user_context()
+    return render_template('Home.html', **user_context)
 @app.route("/Users")
 def users():
     if 'user_id' not in session or session.get('user_role') != 'administrator':
         flash('Access denied. Administrator privileges required.', 'error')
         return redirect(url_for('index'))
     
-    return render_template('Users.html')
+    user_context = get_user_context()
+    return render_template('Users.html', **user_context)
 
 @app.route('/ExpiringPasswords')
 def expiring_passwords():
@@ -301,10 +328,11 @@ def expiring_passwords():
     # Get users with passwords expiring in the next 30 days
     result = get_expiring_passwords(days_ahead=30)
     
+    user_context = get_user_context()
     return render_template('ExpiringPasswords.html', 
-                         user_name=session.get('user_name'),
                          users=result.get('users', []),
-                         total_count=result.get('total_count', 0))
+                         total_count=result.get('total_count', 0),
+                         **user_context)
 
 @app.route('/api/users')
 def api_users():

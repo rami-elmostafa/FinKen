@@ -20,9 +20,16 @@ body {
 /* Header with Branding in Top Middle */
 .header {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     min-height: 200px;
+    padding: 0 40px;
+}
+
+.branding {
+    flex: 1;
+    display: flex;
+    justify-content: center;
 }
 
 .branding-content {
@@ -56,6 +63,57 @@ body {
     height: 10rem;
     width: auto;
     object-fit: contain;
+}
+
+/* User Header Styles */
+.user-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #f8f9fa;
+    padding: 12px 20px;
+    border-radius: 50px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+}
+
+.user-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.user-role-badge {
+    font-size: 0.75rem;
+    background: #007bff;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+}
+
+.profile-image {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #007bff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .container {
@@ -199,8 +257,20 @@ body {
     }
     
     .header {
-        top: 1.5rem;
-        right: 1.5rem;
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+        min-height: auto;
+    }
+    
+    .branding {
+        order: 1;
+    }
+    
+    .user-header {
+        order: 2;
+        align-self: stretch;
+        justify-content: center;
     }
     
     .branding-content {
@@ -230,8 +300,27 @@ body {
     }
     
     .header {
-        top: 1rem;
-        right: 1rem;
+        padding: 15px;
+        gap: 15px;
+    }
+    
+    .user-header {
+        padding: 8px 15px;
+        gap: 10px;
+    }
+    
+    .user-name {
+        font-size: 0.9rem;
+    }
+    
+    .user-role-badge {
+        font-size: 0.7rem;
+        padding: 1px 6px;
+    }
+    
+    .profile-image {
+        width: 35px;
+        height: 35px;
     }
     
     .branding-content {
@@ -1190,28 +1279,6 @@ body {
     min-height: calc(100vh - 200px);
 }
 
-.welcome-section {
-    text-align: center;
-    margin-bottom: 30px;
-    padding: 20px;
-    background: linear-gradient(135deg, #007bff, #0056b3);
-    border-radius: 8px;
-    color: white;
-    box-shadow: 0 2px 10px rgba(0, 123, 255, 0.2);
-}
-
-.welcome-section h1 {
-    margin: 0;
-    font-size: 2.5rem;
-    font-weight: 600;
-}
-
-.user-role {
-    margin: 10px 0 0 0;
-    font-size: 1.1rem;
-    opacity: 0.9;
-}
-
 .admin-card {
     border-left: 4px solid #28a745;
 }
@@ -1253,10 +1320,6 @@ body {
 @media (max-width: 768px) {
     .main-content {
         padding: 15px;
-    }
-    
-    .welcome-section h1 {
-        font-size: 2rem;
     }
     
     .quick-actions {

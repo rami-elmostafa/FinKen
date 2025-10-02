@@ -18,6 +18,17 @@
                 </div>
             </div>
         </div>
+        <!-- User Header -->
+        <div class="user-header">
+            <div class="user-info">
+                <span class="user-name">{{ user_name }}</span>
+                <span class="user-role-badge">{{ user_role.title() }}</span>
+            </div>
+            <div class="user-profile">
+                <img src="{{ url_for('profile_image', filename=user_profile_picture) }}" 
+                     alt="Profile Picture" class="profile-image">
+            </div>
+        </div>
     </div>
 
     <!-- Flash Messages -->
@@ -55,12 +66,6 @@
 
     <!-- Main Content -->
     <div class="main-content">
-        <!-- Welcome Message -->
-        <div class="welcome-section">
-            <h1>Welcome back, {{ user_name }}!</h1>
-            <p class="user-role">Role: {{ user_role.title() }}</p>
-        </div>
-
         <!-- Cards Container -->
         <div class="cards-container">
             <div class="card">
