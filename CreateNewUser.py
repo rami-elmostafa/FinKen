@@ -32,7 +32,7 @@ def create_new_user(first_name, last_name, email, dob):
         supabase: Client = create_client(supabase_url, supabase_key)
         
         # Prepare and insert data into RegistrationRequests table
-        user_data = data_prep(first_name, last_name, email, dob, None)
+        user_data = data_prep(first_name, last_name, email, dob)
         response = supabase.table('RegistrationRequests').insert(user_data).execute()
 
         if response.data:
