@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from CreateNewUser import create_new_user, validate_user_input
 from SignInUser import sign_in_user, validate_sign_in_input
 from FinishSignUp import get_signup_context, finalize_signup
+from ProfilePictureHandler import save_user_profile_picture
 
 # Load environment variables from ..env file
 load_dotenv()
@@ -140,9 +141,30 @@ def finish_sign_up():
         confirm_password = request.form.get('confirm_password')
         question_id = request.form.get('security_question')
         answer = request.form.get('security_answer')
+        
+        # Handle the signup process
         res = finalize_signup(token, password, confirm_password, int(question_id) if question_id else None, answer)
+        
         if res.get('success'):
-            flash(f"Account created. Your username is {res.get('username')}. Please sign in.", 'success')
+            # Handle profile picture upload if provided
+            if 'profile_picture' in request.files:
+                profile_file = request.files['profile_picture']
+                if profile_file and profile_file.filename != '':
+                    # Check file extension
+                    allowed_extensions = {'.jpg', '.jpeg', '.png'}
+                    file_ext = os.path.splitext(profile_file.filename.lower())[1]
+                    if file_ext in allowed_extensions:
+                        try:
+                            # Get user_id from the signup result
+                            user_id = res.get('user_id')
+                            if user_id:
+                                pic_result = save_user_profile_picture(user_id, profile_file)
+                                if not pic_result.get('success'):
+                                    flash(f'Account created but profile picture upload failed: {pic_result.get("message", "Unknown error")}', 'warning')
+                        except Exception as e:
+                            flash(f'Account created but profile picture upload failed: {str(e)}', 'warning')
+            
+            flash(f"Account created successfully! Your username is {res.get('username')}. Please sign in.", 'success')
             return redirect(url_for('index'))
         else:
             flash(res.get('message', 'Could not complete sign up'), 'error')
