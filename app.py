@@ -34,15 +34,16 @@ def index():
             # Store user data in session
             session['user_id'] = result['user_data']['user_id']
             session['username'] = result['user_data']['username']
-            session['user_role'] = result['user_data']['role']
+            role = (result['user_data'].get('role') or '').strip().lower() or 'accountant'
+            session['user_role'] = role
             session['user_name'] = f"{result['user_data']['first_name']} {result['user_data']['last_name']}"
             
             flash(f'Welcome back, {result["user_data"]["first_name"]}!', 'success')
             
             # Redirect based on user role
-            if result['user_data']['role'] == 'administrator':
+            if role == 'administrator':
                 return redirect(url_for('admin_dashboard'))
-            elif result['user_data']['role'] == 'manager':
+            elif role == 'manager':
                 return redirect(url_for('manager_dashboard'))
             else:  # accountant or default role
                 return redirect(url_for('accountant_dashboard'))

@@ -126,6 +126,29 @@ def sign_in_user(username, password):
         except Exception:
             # If updating login info fails, continue with successful login
             pass
+
+        # Resolve role name from RoleID via roles table; normalize and fallback
+        role_name = 'accountant'
+        role_id_raw = user_record.get('RoleID')
+        role_id = None
+        try:
+            if role_id_raw is not None:
+                role_id = int(role_id_raw)
+        except (TypeError, ValueError):
+            role_id = None
+
+        if role_id is not None:
+            try:
+                role_resp = supabase.table('roles').select('RoleName').eq('RoleID', role_id).limit(1).execute()
+                if role_resp.data and len(role_resp.data) > 0:
+                    rn = role_resp.data[0].get('RoleName')
+                    if isinstance(rn, str) and rn.strip():
+                        role_name = rn.strip().lower()
+            except Exception:
+                pass
+
+        if role_name not in ('administrator', 'manager', 'accountant'):
+            role_name = {1: 'administrator', 2: 'manager', 3: 'accountant'}.get(role_id, 'accountant')
         
         # Return successful authentication with user data (excluding sensitive info)
         user_data = {
@@ -134,7 +157,7 @@ def sign_in_user(username, password):
             'first_name': user_record.get('FirstName'),
             'last_name': user_record.get('LastName'),
             'email': user_record.get('Email'),
-            'role': user_record.get('Role', 'accountant'),  # Default to accountant role
+            'role': role_name,
             'is_active': user_record.get('IsActive', True)
         }
         
