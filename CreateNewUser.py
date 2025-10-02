@@ -32,7 +32,7 @@ def create_new_user(first_name, last_name, email, dob):
         supabase: Client = create_client(supabase_url, supabase_key)
         
         # Prepare and insert data into RegistrationRequests table
-        user_data = dataPrep(first_name, last_name, email, dob, None)
+        user_data = data_prep(first_name, last_name, email, dob, None)
         response = supabase.table('RegistrationRequests').insert(user_data).execute()
 
         if response.data:
@@ -54,7 +54,7 @@ def create_new_user(first_name, last_name, email, dob):
         }
     
     
-def dataPrep(first_name, last_name, email, dob):
+def data_prep(first_name, last_name, email, dob):
     """
     Prepare and validate user data for insertion.
 
@@ -66,8 +66,6 @@ def dataPrep(first_name, last_name, email, dob):
     Returns:
         dict: Prepared user data
     """
-    
-    # Validate user data
 
     # Prepare user data for insertion
     user_data = {
