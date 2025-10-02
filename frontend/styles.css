@@ -510,7 +510,7 @@ body {
     background-color: #555;
     color: #fff;
     transition: left 0.3s ease;
-    z-index: 9999;
+    z-index: 10001;
 }
 
 .nav-list {
