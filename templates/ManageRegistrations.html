@@ -72,6 +72,7 @@
                         <th>Name</th>
                         <th>Email</th>
                         <th>Date of Birth</th>
+                        <th>Address</th>
                         <th>Request Date</th>
                         <th>Status</th>
                         <th>Reviewed By</th>
@@ -86,6 +87,7 @@
                         <td>{{ request.FirstName }} {{ request.LastName }}</td>
                         <td>{{ request.Email }}</td>
                         <td>{{ request.DOB if request.DOB else 'N/A' }}</td>
+                        <td>{{ request.Address if request.Address else 'N/A' }}</td>
                         <td>{{ request.RequestDate[:10] if request.RequestDate else 'N/A' }}</td>
                         <td>
                             <span class="status-badge status-{{ request.Status.lower() }}">
@@ -130,6 +132,30 @@
             </div>
             {% endif %}
         </div>
+
+        <!-- Pagination -->
+        {% if pagination and pagination.total_pages > 1 %}
+        <div class="pagination">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('manage_registrations', page=pagination.prev_page, search=current_search, status=current_status) }}" 
+                   class="pagination-btn">Previous</a>
+            {% else %}
+                <span class="pagination-btn disabled">Previous</span>
+            {% endif %}
+            
+            <span class="page-info">
+                Page {{ pagination.current_page }} of {{ pagination.total_pages }} 
+                ({{ pagination.total_requests }} total requests)
+            </span>
+            
+            {% if pagination.has_next %}
+                <a href="{{ url_for('manage_registrations', page=pagination.next_page, search=current_search, status=current_status) }}" 
+                   class="pagination-btn">Next</a>
+            {% else %}
+                <span class="pagination-btn disabled">Next</span>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 
     <!-- Reject Modal -->
@@ -153,10 +179,47 @@
     </div>
 
     <script>
-        // Filter functionality
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Set initial values from URL parameters
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusFilter = document.getElementById('status-filter');
+            const searchInput = document.getElementById('search-input');
+            
+            // Set values from URL parameters
+            const statusParam = urlParams.get('status') || '';
+            const searchParam = urlParams.get('search') || '';
+            
+            if (statusParam) {
+                statusFilter.value = statusParam;
+            }
+            if (searchParam) {
+                searchInput.value = searchParam;
+            }
+        });
+
+        // Filter functionality with URL updates
         const statusFilter = document.getElementById('status-filter');
         const searchInput = document.getElementById('search-input');
         const tableRows = document.querySelectorAll('#requests-table tbody tr');
+
+        function updateUrl() {
+            const params = new URLSearchParams();
+            
+            if (statusFilter.value) {
+                params.set('status', statusFilter.value);
+            }
+            if (searchInput.value) {
+                params.set('search', searchInput.value);
+            }
+            
+            const newUrl = window.location.pathname + '?' + params.toString();
+            window.history.pushState({}, '', newUrl);
+            
+            // Reload page with new parameters
+            window.location.href = newUrl;
+        }
 
         function filterTable() {
             const statusValue = statusFilter.value.toLowerCase();
@@ -176,8 +239,14 @@
             });
         }
 
-        statusFilter.addEventListener('change', filterTable);
-        searchInput.addEventListener('input', filterTable);
+        statusFilter.addEventListener('change', updateUrl);
+        
+        // Add debouncing to search input
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(updateUrl, 500); // Wait 500ms after user stops typing
+        });
 
         // Modal functionality
         document.addEventListener('DOMContentLoaded', function() {

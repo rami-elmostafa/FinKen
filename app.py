@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 import os
 from dotenv import load_dotenv
 from CreateNewUser import create_new_user, validate_user_input
@@ -12,6 +12,8 @@ from AdminManagement import (
     reject_registration_request,
     get_registration_request_details
 )
+from UserManagement import get_users_paginated, update_user_status, get_user_by_id
+from EmailUser import send_email
 
 # Load environment variables from ..env file
 load_dotenv()
@@ -124,12 +126,25 @@ def manage_registrations():
         flash('Access denied. Administrator privileges required.', 'error')
         return redirect(url_for('index'))
     
-    # Get all registration requests
-    all_requests = get_all_registration_requests()
+    # Get pagination parameters
+    page = request.args.get('page', 1, type=int)
+    search_term = request.args.get('search', '', type=str)
+    status_filter = request.args.get('status', '', type=str)
+    
+    # Get paginated registration requests
+    result = get_all_registration_requests(
+        page=page, 
+        per_page=20, 
+        search_term=search_term, 
+        status_filter=status_filter
+    )
     
     return render_template('ManageRegistrations.html', 
                          user_name=session.get('user_name'),
-                         requests=all_requests.get('requests', []))
+                         requests=result.get('requests', []),
+                         pagination=result.get('pagination', {}),
+                         current_search=search_term,
+                         current_status=status_filter)
 
 @app.route('/ApproveRegistration/<int:request_id>', methods=['POST'])
 def approve_registration(request_id):
@@ -270,7 +285,87 @@ def home():
     return render_template('Home.html')
 @app.route("/Users")
 def users():
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        flash('Access denied. Administrator privileges required.', 'error')
+        return redirect(url_for('index'))
+    
     return render_template('Users.html')
+
+@app.route('/api/users')
+def api_users():
+    """API endpoint to get paginated users data"""
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    # Get pagination parameters
+    page = request.args.get('page', 1, type=int)
+    search_term = request.args.get('search', '', type=str)
+    status_filter = request.args.get('status', '', type=str)
+    
+    # Get paginated users
+    result = get_users_paginated(
+        page=page, 
+        per_page=20, 
+        search_term=search_term, 
+        status_filter=status_filter
+    )
+    
+    return jsonify(result)
+
+@app.route('/api/users/<int:user_id>/status', methods=['POST'])
+def update_user_status_api(user_id):
+    """API endpoint to update user status"""
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    data = request.get_json()
+    action = data.get('action')
+    
+    if action not in ['activate', 'deactivate', 'suspend', 'unsuspend']:
+        return jsonify({'success': False, 'message': 'Invalid action'}), 400
+    
+    result = update_user_status(user_id, action)
+    return jsonify(result)
+
+@app.route('/api/send-email', methods=['POST'])
+def send_email_api():
+    """API endpoint to send email to users"""
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json()
+        
+        # Get sender info from session
+        sender_name = session.get('user_name', 'Administrator')
+        
+        # Extract form data
+        recipient_email = data.get('recipient_email')
+        subject = data.get('subject')
+        message = data.get('message')
+        
+        if not all([recipient_email, subject, message]):
+            return jsonify({
+                'success': False, 
+                'message': 'Missing required fields: recipient_email, subject, or message'
+            }), 400
+        
+        # Send the email
+        result = send_email(
+            sender_email='notifications@job-fit-ai.com',  # This will be set as reply-to
+            sender_name=sender_name,
+            receiver_email=recipient_email,
+            subject_line=subject,
+            body=message
+        )
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error sending email: {str(e)}'
+        }), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))

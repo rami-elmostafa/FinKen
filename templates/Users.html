@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - PocketWatch</title>
+    <title>Users - FinKen</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-<!-- Header with Branding -->
+    <!-- Header with Branding -->
     <div class="header">
         <div class="branding">
             <div class="branding-content">
@@ -19,56 +19,388 @@
             </div>
         </div>
     </div>
-<!-- Navigation Menu -->
-<button class="nav-toggle">Toggle Navigation</button>
+
+    <!-- Navigation Menu -->
+    <button class="nav-toggle">Toggle Navigation</button>
     <nav class="navbar">
         <ul class="nav-list">
             <img src="{{ url_for('static', filename='images/finkenlogo.png') }}" alt="FinKen Logo" class="logo-image">
-            <li><a href="/Home">Dashboard</a></li>
+            <li><a href="/AdminDashboard">Dashboard</a></li>
+            <li><a href="/ManageRegistrations">Manage Registrations</a></li>
             <li class="active"><a href="/Users">Users</a></li>
             <li><a href="#">Statements</a></li>
+            <li><a href="/SignOut">Sign Out</a></li>
         </ul>
     </nav>
 
-<!-- UsersList -->
-<div class="user-list-container">
-    <h1 class="user-header">Users</h1>
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
 
-    <!-- Search and Filter -->
-    <div class="search-filter">
-        <input type="text" id="search-input" placeholder="Search users...">
-        <select id="status-filter">
-            <option value="">All</option>
-            <option value="active">Active</option>
-            <option value="deactivated">Deactivated</option>
-        </select>
+    <!-- Main Content -->
+    <div class="admin-container">
+        <h1 class="admin-header">User Management</h1>
+        
+        <!-- Filter Controls -->
+        <div class="filter-controls">
+            <label for="status-filter">Filter by Status:</label>
+            <select id="status-filter">
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="suspended">Suspended</option>
+            </select>
+            
+            <input type="text" id="search-input" placeholder="Search by name or email...">
+        </div>
+
+        <!-- Users Table -->
+        <div class="requests-table">
+            <table id="users-table">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Username</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Date of Birth</th>
+                        <th>Address</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Date Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="users-table-body">
+                    <!-- Users will be loaded via JavaScript -->
+                </tbody>
+            </table>
+            
+            <div id="no-users" class="no-requests" style="display: none;">
+                <p>No users found.</p>
+            </div>
+            
+            <div id="loading" class="no-requests">
+                <p>Loading users...</p>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination" style="display: none;">
+            <button id="prev-page" class="pagination-btn">Previous</button>
+            <span id="page-info"></span>
+            <button id="next-page" class="pagination-btn">Next</button>
+        </div>
     </div>
 
-    <div class="user-list">
-        <table>
-            <thead>
-                <tr>
-                    <th>UserID</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="user-table-body">
-            </tbody>
-        </table>
+    <!-- Email Modal -->
+    <div id="email-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close" id="close-email-modal">&times;</span>
+            <h2>Send Email</h2>
+            <form id="email-form">
+                <div class="form-group">
+                    <label for="email-recipient">To:</label>
+                    <input type="email" id="email-recipient" name="recipient_email" readonly required>
+                </div>
+                <div class="form-group">
+                    <label for="email-subject">Subject:</label>
+                    <input type="text" id="email-subject" name="subject" required placeholder="Enter email subject">
+                </div>
+                <div class="form-group">
+                    <label for="email-message">Message:</label>
+                    <textarea id="email-message" name="message" rows="8" required placeholder="Enter your message..."></textarea>
+                </div>
+                <div class="btn-container">
+                    <button type="button" class="btn btn-secondary" id="cancel-email">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Send Email</button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
-<script>
-    document.querySelector('.nav-toggle').addEventListener('click', function() {
-    document.querySelector('.navbar').style.left = '0';
-});
 
-document.querySelector('.navbar').addEventListener('mouseleave', function() {
-    document.querySelector('.navbar').style.left = '-250px';
-});
-</script>
+    <script>
+        let currentPage = 1;
+        let currentSearch = '';
+        let currentStatus = '';
+
+        // Load users function
+        async function loadUsers(page = 1, search = '', status = '') {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('no-users').style.display = 'none';
+                
+                const params = new URLSearchParams({
+                    page: page,
+                    search: search,
+                    status: status
+                });
+                
+                const response = await fetch(`/api/users?${params}`);
+                const data = await response.json();
+                
+                document.getElementById('loading').style.display = 'none';
+                
+                if (data.success) {
+                    renderUsers(data.users);
+                    renderPagination(data.pagination);
+                } else {
+                    console.error('Error loading users:', data.message);
+                    document.getElementById('no-users').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('no-users').style.display = 'block';
+            }
+        }
+
+        // Render users in table
+        function renderUsers(users) {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '';
+            
+            if (users.length === 0) {
+                document.getElementById('no-users').style.display = 'block';
+                return;
+            }
+            
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                
+                const statusBadgeClass = `status-${user.Status.toLowerCase()}`;
+                const actionButtons = createActionButtons(user);
+                
+                row.innerHTML = `
+                    <td>${user.UserID}</td>
+                    <td>${user.Username || 'N/A'}</td>
+                    <td>${user.FirstName} ${user.LastName}</td>
+                    <td>${user.Email}</td>
+                    <td>${user.DOB || 'N/A'}</td>
+                    <td>${user.Address || 'N/A'}</td>
+                    <td>${user.RoleName}</td>
+                    <td><span class="status-badge ${statusBadgeClass}">${user.Status}</span></td>
+                    <td>${user.DateCreated ? user.DateCreated.substring(0, 10) : 'N/A'}</td>
+                    <td>${actionButtons}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // Attach event listeners to action buttons
+            attachActionListeners();
+        }
+
+        // Create action buttons for each user
+        function createActionButtons(user) {
+            let buttons = `<div class="action-buttons">`;
+            
+            // Email button
+            buttons += `<button type="button" class="btn btn-small btn-primary email-btn" 
+                        data-user-id="${user.UserID}" 
+                        data-email="${user.Email}" 
+                        data-name="${user.FirstName} ${user.LastName}">Email</button>`;
+            
+            // Status buttons
+            if (user.Status === 'active') {
+                buttons += `<button type="button" class="btn btn-small btn-warning status-btn" 
+                            data-user-id="${user.UserID}" 
+                            data-action="suspend">Suspend</button>`;
+                buttons += `<button type="button" class="btn btn-small btn-danger status-btn" 
+                            data-user-id="${user.UserID}" 
+                            data-action="deactivate">Deactivate</button>`;
+            } else if (user.Status === 'inactive') {
+                buttons += `<button type="button" class="btn btn-small btn-success status-btn" 
+                            data-user-id="${user.UserID}" 
+                            data-action="activate">Activate</button>`;
+            } else if (user.Status === 'suspended') {
+                buttons += `<button type="button" class="btn btn-small btn-success status-btn" 
+                            data-user-id="${user.UserID}" 
+                            data-action="unsuspend">Unsuspend</button>`;
+            }
+            
+            buttons += `</div>`;
+            return buttons;
+        }
+
+        // Attach event listeners to action buttons
+        function attachActionListeners() {
+            // Email buttons
+            document.querySelectorAll('.email-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const email = this.dataset.email;
+                    const name = this.dataset.name;
+                    showEmailModal(email, name);
+                });
+            });
+            
+            // Status buttons
+            document.querySelectorAll('.status-btn').forEach(button => {
+                button.addEventListener('click', async function() {
+                    const userId = this.dataset.userId;
+                    const action = this.dataset.action;
+                    
+                    if (confirm(`Are you sure you want to ${action} this user?`)) {
+                        await updateUserStatus(userId, action);
+                    }
+                });
+            });
+        }
+
+        // Update user status
+        async function updateUserStatus(userId, action) {
+            try {
+                const response = await fetch(`/api/users/${userId}/status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ action: action })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Reload current page
+                    loadUsers(currentPage, currentSearch, currentStatus);
+                } else {
+                    alert('Error updating user status: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error updating user status:', error);
+                alert('Error updating user status');
+            }
+        }
+
+        // Render pagination
+        function renderPagination(pagination) {
+            const paginationDiv = document.getElementById('pagination');
+            const prevBtn = document.getElementById('prev-page');
+            const nextBtn = document.getElementById('next-page');
+            const pageInfo = document.getElementById('page-info');
+            
+            if (pagination.total_pages <= 1) {
+                paginationDiv.style.display = 'none';
+                return;
+            }
+            
+            paginationDiv.style.display = 'flex';
+            
+            prevBtn.disabled = !pagination.has_prev;
+            nextBtn.disabled = !pagination.has_next;
+            
+            pageInfo.textContent = `Page ${pagination.current_page} of ${pagination.total_pages} (${pagination.total_users} total users)`;
+            
+            // Update current page
+            currentPage = pagination.current_page;
+        }
+
+        // Email modal functions
+        function showEmailModal(email, name) {
+            document.getElementById('email-recipient').value = email;
+            document.getElementById('email-subject').value = '';
+            document.getElementById('email-message').value = '';
+            document.getElementById('email-modal').style.display = 'block';
+        }
+
+        function closeEmailModal() {
+            document.getElementById('email-modal').style.display = 'none';
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load initial users
+            loadUsers();
+            
+            // Search functionality
+            document.getElementById('search-input').addEventListener('input', function() {
+                currentSearch = this.value;
+                currentPage = 1;
+                loadUsers(currentPage, currentSearch, currentStatus);
+            });
+            
+            // Status filter
+            document.getElementById('status-filter').addEventListener('change', function() {
+                currentStatus = this.value;
+                currentPage = 1;
+                loadUsers(currentPage, currentSearch, currentStatus);
+            });
+            
+            // Pagination buttons
+            document.getElementById('prev-page').addEventListener('click', function() {
+                if (currentPage > 1) {
+                    loadUsers(currentPage - 1, currentSearch, currentStatus);
+                }
+            });
+            
+            document.getElementById('next-page').addEventListener('click', function() {
+                loadUsers(currentPage + 1, currentSearch, currentStatus);
+            });
+            
+            // Email modal events
+            document.getElementById('close-email-modal').addEventListener('click', closeEmailModal);
+            document.getElementById('cancel-email').addEventListener('click', closeEmailModal);
+            
+            // Email form submission
+            document.getElementById('email-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const data = {
+                    recipient_email: formData.get('recipient_email'),
+                    subject: formData.get('subject'),
+                    message: formData.get('message')
+                };
+                
+                try {
+                    const response = await fetch('/api/send-email', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('Email sent successfully!');
+                        closeEmailModal();
+                    } else {
+                        alert('Error sending email: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Error sending email:', error);
+                    alert('Error sending email');
+                }
+            });
+        });
+
+        // Navigation
+        document.querySelector('.nav-toggle').addEventListener('click', function() {
+            document.querySelector('.navbar').style.left = '0';
+        });
+
+        document.querySelector('.navbar').addEventListener('mouseleave', function() {
+            document.querySelector('.navbar').style.left = '-250px';
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const emailModal = document.getElementById('email-modal');
+            if (event.target === emailModal) {
+                closeEmailModal();
+            }
+        }
+    </script>
 </body>
-<script src="/frontend/Users.js"></script>
 </html>

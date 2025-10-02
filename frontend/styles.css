@@ -878,6 +878,170 @@ body {
     color: #6c757d;
 }
 
+/* Pagination Styles */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+    gap: 20px;
+}
+
+.pagination-btn {
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.pagination-btn:hover:not(.disabled) {
+    background-color: #0056b3;
+}
+
+.pagination-btn.disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+.pagination-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+.page-info {
+    font-weight: 500;
+    color: #333;
+    font-size: 14px;
+}
+
+/* Email Modal Styles */
+.modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-content h2 {
+    margin-bottom: 20px;
+    color: #333;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px;
+}
+
+.modal-content .close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #999;
+    background: none;
+    border: none;
+}
+
+.modal-content .close:hover {
+    color: #333;
+}
+
+.modal-content .form-group {
+    margin-bottom: 20px;
+}
+
+.modal-content .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+.modal-content .form-group input,
+.modal-content .form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.modal-content .form-group input:focus,
+.modal-content .form-group textarea:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.modal-content .form-group textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.modal-content .btn-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+/* Action Buttons Styling */
+.action-buttons {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.btn-small {
+    padding: 4px 8px;
+    font-size: 12px;
+    min-width: auto;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #545b62;
+    border-color: #545b62;
+}
+
 /* Responsive Design for Admin */
 @media (max-width: 768px) {
     .admin-container {

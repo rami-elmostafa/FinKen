@@ -1,4 +1,5 @@
 import os
+import math
 from datetime import datetime, timezone
 from supabase import create_client, Client
 from FinishSignUp import create_signup_invitation
@@ -44,38 +45,99 @@ def get_pending_registration_requests():
             'requests': []
         }
 
-def get_all_registration_requests():
+def get_all_registration_requests(page=1, per_page=20, search_term='', status_filter=''):
     """
-    Get all registration requests (pending, approved, rejected) for admin review.
+    Get all registration requests (pending, approved, rejected) for admin review with pagination.
+    
+    Args:
+        page (int): Current page number (1-based)
+        per_page (int): Number of requests per page
+        search_term (str): Search term for name or email
+        status_filter (str): Filter by status ('Pending', 'Approved', 'Rejected', or empty for all)
     
     Returns:
-        dict: Response with success flag and list of all requests
+        dict: Response with success flag, list of requests, and pagination info
     """
     try:
         sb = _sb()
         
-        # Get all registration requests with reviewer information
-        response = sb.table('registration_requests').select('''
+        # Start building the query
+        query = sb.table('registration_requests').select('''
             *,
             reviewer:ReviewedByUserID(Username, FirstName, LastName)
-        ''').order('RequestDate', desc=True).execute()
+        ''')
+        
+        # Apply search filter if provided
+        if search_term:
+            query = query.or_(
+                f'FirstName.ilike.%{search_term}%,'
+                f'LastName.ilike.%{search_term}%,'
+                f'Email.ilike.%{search_term}%'
+            )
+        
+        # Apply status filter if provided
+        if status_filter:
+            query = query.eq('Status', status_filter)
+        
+        # Get total count for pagination (before applying limit/offset)
+        count_query = sb.table('registration_requests').select('RequestID', count='exact')
+        
+        # Apply same filters to count query
+        if search_term:
+            count_query = count_query.or_(
+                f'FirstName.ilike.%{search_term}%,'
+                f'LastName.ilike.%{search_term}%,'
+                f'Email.ilike.%{search_term}%'
+            )
+        
+        if status_filter:
+            count_query = count_query.eq('Status', status_filter)
+        
+        # Execute count query
+        count_response = count_query.execute()
+        total_requests = count_response.count if hasattr(count_response, 'count') else len(count_response.data)
+        
+        # Calculate pagination
+        total_pages = math.ceil(total_requests / per_page) if total_requests > 0 else 1
+        offset = (page - 1) * per_page
+        
+        # Apply pagination and ordering
+        query = query.order('RequestDate', desc=True).range(offset, offset + per_page - 1)
+        
+        # Execute the main query
+        response = query.execute()
+        
+        # Pagination info
+        pagination = {
+            'current_page': page,
+            'per_page': per_page,
+            'total_requests': total_requests,
+            'total_pages': total_pages,
+            'has_prev': page > 1,
+            'has_next': page < total_pages,
+            'prev_page': page - 1 if page > 1 else None,
+            'next_page': page + 1 if page < total_pages else None
+        }
         
         if response.data:
             return {
                 'success': True,
-                'requests': response.data
+                'requests': response.data,
+                'pagination': pagination
             }
         else:
             return {
                 'success': True,
-                'requests': []
+                'requests': [],
+                'pagination': pagination
             }
             
     except Exception as e:
         return {
             'success': False,
             'message': f'Error retrieving registration requests: {str(e)}',
-            'requests': []
+            'requests': [],
+            'pagination': {'current_page': 1, 'total_pages': 1, 'total_requests': 0}
         }
 
 def approve_registration_request(request_id: int, reviewer_user_id: int, expires_in_hours: int = 48):
