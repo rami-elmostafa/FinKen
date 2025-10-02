@@ -1,7 +1,7 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home - PocketWatch</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
@@ -24,12 +24,42 @@
     <nav class="navbar">
         <ul class="nav-list">
             <img src="{{ url_for('static', filename='images/finkenlogo.png') }}" alt="FinKen Logo" class="logo-image">
-            <li class="active"><a href="/Home">Dashboard</a></li>
-            <li><a href="/Users">Users</a></li>
+            <li><a href="/Home">Dashboard</a></li>
+            <li class="active"><a href="/Users">Users</a></li>
             <li><a href="#">Statements</a></li>
         </ul>
     </nav>
 
+<!-- UsersList -->
+<div class="user-list-container">
+    <h1 class="user-header">Users</h1>
+
+    <!-- Search and Filter -->
+    <div class="search-filter">
+        <input type="text" id="search-input" placeholder="Search users...">
+        <select id="status-filter">
+            <option value="">All</option>
+            <option value="active">Active</option>
+            <option value="deactivated">Deactivated</option>
+        </select>
+    </div>
+
+    <div class="user-list">
+        <table>
+            <thead>
+                <tr>
+                    <th>UserID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="user-table-body">
+            </tbody>
+        </table>
+    </div>
+</div>
 <script>
     document.querySelector('.nav-toggle').addEventListener('click', function() {
     document.querySelector('.navbar').style.left = '0';
@@ -39,29 +69,6 @@ document.querySelector('.navbar').addEventListener('mouseleave', function() {
     document.querySelector('.navbar').style.left = '-250px';
 });
 </script>
-
-<!-- Main Content -->
-<div class="cards-container">
-    <div class="card">
-        <div class="card-header">
-            <h2>Accounting Ratios</h2>
-            <p>Date: 01/01/2022</p>
-        </div>
-        <div class="card-body">
-            <p>This is a sample</p>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-header">
-            <h2>Sample 2</h2>
-            <p>Date: 01/01/2022</p>
-        </div>
-        <div class="card-body">
-            <p>Yo what it do this is a sample 2</p>
-        </div>
-    </div>
-    <!-- Repeat the above card div for each card -->
-</div>
-
 </body>
+<script src="/frontend/Users.js"></script>
 </html>

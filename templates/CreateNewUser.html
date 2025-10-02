@@ -7,19 +7,18 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <!-- Header with Branding -->
+<!-- Header with Branding -->
     <div class="header">
         <div class="branding">
             <div class="branding-content">
                 <img src="{{ url_for('static', filename='images/finkenlogo.png') }}" alt="FinKen Logo" class="logo-image">
                 <div class="branding-text">
-                    <h1><span class="fin-text">Fin</span><span class="ken-text">Ken</span></h1>
+                    <h1><span class="pocket-text">Pocket</span><span class="watch-text">Watch</span></h1>
                     <p>Financial Accounting App</p>
                 </div>
             </div>
         </div>
     </div>
-
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -37,7 +36,6 @@
     <div class="container">
         <div class="form-container">
             <h2 class="header-title">Create New User Account</h2>
-            
             <form action="/CreateNewUser" method="POST">
                 <!-- Name Fields -->
                 <div class="form-row">

@@ -5,7 +5,7 @@ from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from dotenv import load_dotenv  # <-- 1. IMPORT the library
 
-load_dotenv()  # <-- 2. LOAD the .env file
+load_dotenv()  # <-- 2. LOAD the ..env file
 
 # 3. USE YOUR VERIFIED DOMAIN in the from_email
 #    This must be an address from the domain you authenticated (job-fit-ai.com)
@@ -19,7 +19,7 @@ message = Mail(
     html_content='<strong>and easy to do anywhere, even with Python</strong>')
 
 try:
-    # This will now correctly load your key from the .env file
+    # This will now correctly load your key from the ..env file
     api_key = os.environ.get('SENDGRID_API_KEY')
     sg = SendGridAPIClient(api_key)
     

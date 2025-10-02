@@ -5,7 +5,7 @@ from CreateNewUser import create_new_user, validate_user_input
 from SignInUser import sign_in_user, validate_sign_in_input
 from FinishSignUp import get_signup_context, finalize_signup
 
-# Load environment variables from .env file
+# Load environment variables from ..env file
 load_dotenv()
 
 app = Flask(__name__, static_folder='frontend')
@@ -87,7 +87,6 @@ def create_new_user_route():
 
 @app.route("/ForgotPassword")
 def forgot_password():
-    # Change this to whatever the new forgot password page is once it is created
     return render_template('ForgotPassword.html')
 
 @app.route('/SignOut')
@@ -163,6 +162,9 @@ def finish_sign_up():
 @app.route("/Home")
 def home():
     return render_template('Home.html')
+@app.route("/Users")
+def users():
+    return render_template('Users.html')
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))
