@@ -44,7 +44,7 @@
                     <div class="form-group">
                         <label for="username">Username</label>
                         <input type="text" id="username" name="username" 
-                               placeholder="Enter your username"
+                               placeholder="Enter your username" required
                                value="{{ request.form.get('username', '') }}">
                     </div>
                     
@@ -59,8 +59,8 @@
 
                 <!-- Action Links -->
                 <div class="login-actions">
-                    <a href="/ForgotPassword" class="btn btn-link">Forgot Password?</a>
-                    <a href="/CreateNewUser" class="btn btn-secondary">Create New User Account</a>
+                    <a href="{{ url_for('forgot_password') }}" class="btn btn-link">Forgot Password?</a>
+                    <a href="{{ url_for('create_new_user_route') }}" class="btn btn-secondary">Create New User Account</a>
                 </div>
             </div>
         </div>

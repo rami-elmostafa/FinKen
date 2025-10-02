@@ -3,6 +3,11 @@ from datetime import datetime
 from supabase import create_client, Client
 from passwordHash import hash_password
 
+from dotenv import load_dotenv
+load_dotenv()
+
+#This is the function to create a new user in the database
+
 def create_new_user(first_name, last_name, email, dob):
     """
     Create a new user registration request in the Supabase database.
@@ -25,15 +30,13 @@ def create_new_user(first_name, last_name, email, dob):
         if not supabase_url or not supabase_key:
             raise ValueError("Supabase URL and API key must be set in environment variables")
         
+        result = validate_user_input(first_name, last_name, email, dob)
+        if not result.get('success', False):
+            raise ValueError(result.get('message', 'Invalid user input'))
+        
         supabase: Client = create_client(supabase_url, supabase_key)
         
-        # Validate date of birth format
-        try:
-            datetime.strptime(dob, '%Y-%m-%d')
-        except ValueError:
-            raise ValueError("Date of birth must be in YYYY-MM-DD format")
-        
-        # Prepare user data for insertion
+        # Prepare and insert data into RegistrationRequests table
         user_data = {
             'FirstName': first_name.strip(),
             'LastName': last_name.strip(),
@@ -41,8 +44,7 @@ def create_new_user(first_name, last_name, email, dob):
             'DOB': dob,
             'Address': '',  # Empty for now since we don't collect address in the form
             'RequestDate': datetime.now().isoformat()
-        }
-        
+        } 
         # Insert data into RegistrationRequests table
         response = supabase.table('registration_requests').insert(user_data).execute()
         
@@ -63,6 +65,8 @@ def create_new_user(first_name, last_name, email, dob):
             'success': False,
             'message': f'Error creating user: {str(e)}'
         }
+    
+
 
 def validate_user_input(first_name, last_name, email, dob):
     """
