@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from CreateNewUser import create_new_user, validate_user_input
 from SignInUser import sign_in_user, validate_sign_in_input
+from FinishSignUp import get_signup_context, finalize_signup
 
 # Load environment variables from .env file
 load_dotenv()
