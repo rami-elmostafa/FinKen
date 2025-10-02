@@ -3,6 +3,9 @@ from datetime import datetime
 from supabase import create_client, Client
 from passwordHash import hash_password
 
+from dotenv import load_dotenv
+load_dotenv()
+
 def create_new_user(first_name, last_name, email, dob):
     """
     Create a new user registration request in the Supabase database.
@@ -32,8 +35,16 @@ def create_new_user(first_name, last_name, email, dob):
         supabase: Client = create_client(supabase_url, supabase_key)
         
         # Prepare and insert data into RegistrationRequests table
-        user_data = data_prep(first_name, last_name, email, dob)
-        response = supabase.table('RegistrationRequests').insert(user_data).execute()
+        user_data = {
+            'FirstName': first_name.strip(),
+            'LastName': last_name.strip(),
+            'Email': email.strip().lower(),
+            'DOB': dob,
+            'Address': '',  # Empty for now since we don't collect address in the form
+            'RequestDate': datetime.now().isoformat()
+        }
+
+        response = supabase.table('registration_requests').insert(user_data).execute()
 
         if response.data:
             return {
@@ -53,32 +64,6 @@ def create_new_user(first_name, last_name, email, dob):
             'message': f'Error creating user: {str(e)}'
         }
     
-    
-def data_prep(first_name, last_name, email, dob):
-    """
-    Prepare and validate user data for insertion.
-
-    Args:
-        first_name (str): User's first name
-        last_name (str): User's last name
-        email (str): User's email address
-        dob (str): User's date of birth (YYYY-MM-DD format)
-    Returns:
-        dict: Prepared user data
-    """
-
-    # Prepare user data for insertion
-    user_data = {
-        'FirstName': first_name.strip(),
-        'LastName': last_name.strip(),
-        'Email': email.strip().lower(),
-        'DOB': dob,
-        'Username': first_name.strip()[0].lower() + last_name.strip().lower() + dob[2:7].replace('-',''),
-        'Address': '',  # Empty for now since we don't collect address in the form
-        'RequestDate': datetime.now().isoformat()
-    }
-
-    return user_data
 
 
 def validate_user_input(first_name, last_name, email, dob):
