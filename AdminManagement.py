@@ -280,3 +280,124 @@ def get_registration_request_details(request_id: int):
             'success': False,
             'message': f'Error retrieving registration request details: {str(e)}'
         }
+    
+def suspend_user_account(user_id: int, admin_user_id: int, reason: str = None):
+    """
+    Suspend a user account.
+    
+    Args:
+        user_id (int): The UserID of the account to suspend
+        admin_user_id (int): The UserID of the administrator performing the suspension
+        reason (str): Optional reason for suspension
+        
+    Returns:
+        dict: Response with success flag and message
+    """
+    try:
+        sb = _sb()
+        
+        # Check if user exists and is active
+        user_response = sb.table('users').select('*').eq('UserID', user_id).single().execute()
+        
+        if not user_response.data:
+            return {
+                'success': False,
+                'message': 'User not found'
+            }
+        
+        user_data = user_response.data
+        
+        if not user_data.get('IsActive', True):
+            return {
+                'success': False,
+                'message': 'User account is already suspended'
+            }
+        
+        # Update the user's IsActive status
+        update_data = {
+            'IsActive': False,
+            'LastModifiedBy': admin_user_id,
+            'LastModifiedDate': datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Log reason for suspension (optional)
+        if reason:
+            update_data['SuspensionReason'] = reason
+        
+        response = sb.table('users').update(update_data).eq('UserID', user_id).execute()
+        
+        if response.data:
+            return {
+                'success': True,
+                'message': 'User account suspended successfully'
+            }
+        else:
+            return {
+                'success': False,
+                'message': 'Failed to suspend user account'
+            }
+        
+    except Exception as e:
+        return {
+            'success': False,
+            'message': f'Error suspending user account: {str(e)}'
+        }
+    
+def unsuspend_user_account(user_id: int, admin_user_id: int):
+    """
+    Unsuspend a user account.
+    
+    Args:
+        user_id (int): The UserID of the account to unsuspend
+        admin_user_id (int): The UserID of the administrator performing the unsuspension
+        
+    Returns:
+        dict: Response with success flag and message
+    """
+    try:
+        sb = _sb()
+        
+        # Check if user exists and is suspended
+        user_response = sb.table('users').select('*').eq('UserID', user_id).single().execute()
+        
+        if not user_response.data:
+            return {
+                'success': False,
+                'message': 'User not found'
+            }
+        
+        user_data = user_response.data
+        
+        if user_data.get('IsActive', True):
+            return {
+                'success': False,
+                'message': 'User account is not suspended'
+            }
+        
+        # Update the user's IsActive status
+        update_data = {
+            'IsActive': True,
+            'SuspensionReason': None,
+            'LastModifiedBy': admin_user_id,
+            'LastModifiedDate': datetime.now(timezone.utc).isoformat()
+        }
+        
+        response = sb.table('users').update(update_data).eq('UserID', user_id).execute()
+        
+        if response.data:
+            return {
+                'success': True,
+                'message': 'User account unsuspended successfully'
+            }
+        else:
+            return {
+                'success': False,
+                'message': 'Failed to unsuspend user account'
+            }
+        
+    except Exception as e:
+        return {
+            'success': False,
+            'message': f'Error unsuspending user account: {str(e)}'
+        }
+    

@@ -63,7 +63,7 @@ def security_answer(user_id: int, question_id: int, answer: str):
     
     Args:
         user_id (int): The user's ID    
-        question_id (int): The ID of the security question
+        question_id (int): The ID of the security question provided by form
         answer (str): The answer to verify
     Returns:
         dict: Response containing status and message
@@ -84,7 +84,7 @@ def security_answer(user_id: int, question_id: int, answer: str):
         if not response.data:
             return {
                 'success': False,
-                'message': 'No security answer found for this user and question'
+                'message': 'No security question found for this user'
             }
 
         stored_hash = response.data.get('AnswerHash')
