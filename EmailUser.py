@@ -27,8 +27,8 @@ def send_email(sender_email, sender_name, receiver_email, subject_line, body):
     # Always send from the verified domain
     from_address = 'notifications@job-fit-ai.com'
     
-    # Format the subject with sender name and FinKin prefix
-    formatted_subject = f"{sender_name} via FinKin - {subject_line}"
+    # Format the subject with sender name and FinKen prefix
+    formatted_subject = f"{sender_name} via FinKen - {subject_line}"
     
     # Create the email message
     message = Mail(
@@ -113,7 +113,7 @@ def NewUserAdminNotification(first_name, last_name, email):
         
         # Create email content
         full_name = f"{first_name} {last_name}"
-        subject = "New User Registration Request - FinKin"
+        subject = "New User Registration Request - FinKen"
         
         # HTML email body
         email_body = f"""
@@ -133,13 +133,13 @@ def NewUserAdminNotification(first_name, last_name, email):
             </div>
             
             <p style="font-size: 14px; color: #777; margin: 20px 0;">
-                Please log into the FinKin admin panel to review and approve or reject this registration request.
+                Please log into the FinKen admin panel to review and approve or reject this registration request.
             </p>
             
             <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
             
             <p style="font-size: 12px; color: #999; text-align: center;">
-                This is an automated notification from FinKin.<br>
+                This is an automated notification from FinKen.<br>
                 Please do not reply to this email.
             </p>
         </div>
@@ -155,7 +155,7 @@ def NewUserAdminNotification(first_name, last_name, email):
                 # Use the existing send_email function
                 result = send_email(
                     sender_email='notifications@job-fit-ai.com',
-                    sender_name='FinKin System',
+                    sender_name='FinKen System',
                     receiver_email=admin_email,
                     subject_line=subject,
                     body=email_body
