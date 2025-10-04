@@ -1,5 +1,4 @@
-import os
-from supabase import create_client, Client
+from SupabaseClient import _sb
 from passwordHash import verify_password
 
 def sign_in_user(username, password):
@@ -15,17 +14,7 @@ def sign_in_user(username, password):
     """
     try:
         # Initialize Supabase client
-        supabase_url = os.environ.get('SUPABASE_URL')
-        supabase_key = os.environ.get('SUPABASE_ANON_KEY')
-        
-        if not supabase_url or not supabase_key:
-            return {
-                'success': False,
-                'message': 'Database configuration error',
-                'user_data': None
-            }
-        
-        supabase: Client = create_client(supabase_url, supabase_key)
+        sb = sb or _sb()
         
         # Validate input
         if not username or not username.strip():
@@ -47,7 +36,7 @@ def sign_in_user(username, password):
         
         # Query the users table for the username
         # Note: Assuming the users table has columns: Username, PasswordHash, and user details
-        response = supabase.table('users').select('*').eq('Username', username).execute()
+        response = sb.table('users').select('*').eq('Username', username).execute()
         
         # Check if user exists
         if not response.data or len(response.data) == 0:
@@ -89,14 +78,14 @@ def sign_in_user(username, password):
             # Update failed login attempts (optional - requires FailedLoginAttempts column)
             try:
                 failed_attempts = user_record.get('FailedLoginAttempts', 0) + 1
-                supabase.table('users').update({
+                sb.table('users').update({
                     'FailedLoginAttempts': failed_attempts,
                     'LastFailedLogin': 'now()'
                 }).eq('Username', username).execute()
                 
                 # Check if user should be suspended after 3 failed attempts
                 if failed_attempts >= 3:
-                    supabase.table('users').update({
+                    sb.table('users').update({
                         'IsSuspended': True,
                         'SuspensionReason': 'Too many failed login attempts'
                     }).eq('Username', username).execute()
@@ -119,7 +108,7 @@ def sign_in_user(username, password):
         
         # Password is correct - reset failed login attempts and update last login
         try:
-            supabase.table('users').update({
+            sb.table('users').update({
                 'FailedLoginAttempts': 0,
                 'LastLogin': 'now()'
             }).eq('Username', username).execute()
@@ -139,7 +128,7 @@ def sign_in_user(username, password):
 
         if role_id is not None:
             try:
-                role_resp = supabase.table('roles').select('RoleName').eq('RoleID', role_id).limit(1).execute()
+                role_resp = sb.table('roles').select('RoleName').eq('RoleID', role_id).limit(1).execute()
                 if role_resp.data and len(role_resp.data) > 0:
                     rn = role_resp.data[0].get('RoleName')
                     if isinstance(rn, str) and rn.strip():

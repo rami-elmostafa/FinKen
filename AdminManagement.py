@@ -1,20 +1,9 @@
-import os
 import math
 from datetime import datetime, timezone
-from supabase import create_client, Client
 from FinishSignUp import create_signup_invitation
-from dotenv import load_dotenv
+from SupabaseClient import _sb
 
-load_dotenv()
-
-def _sb() -> Client:
-    url = os.environ.get('SUPABASE_URL')
-    key = os.environ.get('SUPABASE_ANON_KEY')
-    if not url or not key:
-        raise RuntimeError("Supabase environment is not configured")
-    return create_client(url, key)
-
-def get_pending_registration_requests():
+def get_pending_registration_requests(sb = None):
     """
     Get all pending registration requests for admin review.
     
@@ -22,7 +11,7 @@ def get_pending_registration_requests():
         dict: Response with success flag and list of pending requests
     """
     try:
-        sb = _sb()
+        sb = sb or _sb()
         
         # Get all pending registration requests
         response = sb.table('registration_requests').select('*').eq('Status', 'Pending').order('RequestDate', desc=True).execute()
@@ -45,7 +34,7 @@ def get_pending_registration_requests():
             'requests': []
         }
 
-def get_all_registration_requests(page=1, per_page=20, search_term='', status_filter=''):
+def get_all_registration_requests(page=1, per_page=20, search_term='', status_filter='', sb = None):
     """
     Get all registration requests (pending, approved, rejected) for admin review with pagination.
     
@@ -59,7 +48,7 @@ def get_all_registration_requests(page=1, per_page=20, search_term='', status_fi
         dict: Response with success flag, list of requests, and pagination info
     """
     try:
-        sb = _sb()
+        sb = sb or _sb()
         
         # Start building the query
         query = sb.table('registration_requests').select('''
@@ -140,7 +129,7 @@ def get_all_registration_requests(page=1, per_page=20, search_term='', status_fi
             'pagination': {'current_page': 1, 'total_pages': 1, 'total_requests': 0}
         }
 
-def approve_registration_request(request_id: int, reviewer_user_id: int, expires_in_hours: int = 48):
+def approve_registration_request(request_id: int, reviewer_user_id: int, expires_in_hours: int = 48, sb = None):
     """
     Approve a registration request and send signup invitation email.
     
@@ -153,7 +142,7 @@ def approve_registration_request(request_id: int, reviewer_user_id: int, expires
         dict: Response with success flag and message
     """
     try:
-        sb = _sb()
+        sb = sb or _sb()
         
         # Check if request exists and is pending
         req_response = sb.table('registration_requests').select('*').eq('RequestID', request_id).single().execute()
@@ -183,7 +172,7 @@ def approve_registration_request(request_id: int, reviewer_user_id: int, expires
             'message': f'Error approving registration request: {str(e)}'
         }
 
-def reject_registration_request(request_id: int, reviewer_user_id: int, rejection_reason: str = None):
+def reject_registration_request(request_id: int, reviewer_user_id: int, rejection_reason: str = None, sb = None):
     """
     Reject a registration request.
     
@@ -196,7 +185,7 @@ def reject_registration_request(request_id: int, reviewer_user_id: int, rejectio
         dict: Response with success flag and message
     """
     try:
-        sb = _sb()
+        sb = sb or _sb()
         
         # Check if request exists and is pending
         req_response = sb.table('registration_requests').select('*').eq('RequestID', request_id).single().execute()
@@ -245,7 +234,7 @@ def reject_registration_request(request_id: int, reviewer_user_id: int, rejectio
             'message': f'Error rejecting registration request: {str(e)}'
         }
 
-def get_registration_request_details(request_id: int):
+def get_registration_request_details(request_id: int, sb = None):
     """
     Get detailed information about a specific registration request.
     
@@ -256,7 +245,7 @@ def get_registration_request_details(request_id: int):
         dict: Response with success flag and request details
     """
     try:
-        sb = _sb()
+        sb = sb or _sb()
         
         # Get the registration request with reviewer information
         response = sb.table('registration_requests').select('''
@@ -281,7 +270,7 @@ def get_registration_request_details(request_id: int):
             'message': f'Error retrieving registration request details: {str(e)}'
         }
     
-def suspend_user_account(user_id: int, admin_user_id: int, reason: str = None):
+def suspend_user_account(user_id: int, admin_user_id: int, reason: str = None, sb = None):
     """
     Suspend a user account.
     
@@ -294,7 +283,7 @@ def suspend_user_account(user_id: int, admin_user_id: int, reason: str = None):
         dict: Response with success flag and message
     """
     try:
-        sb = _sb()
+        sb = sb or _sb()
         
         # Check if user exists and is active
         user_response = sb.table('users').select('*').eq('UserID', user_id).single().execute()
@@ -343,7 +332,7 @@ def suspend_user_account(user_id: int, admin_user_id: int, reason: str = None):
             'message': f'Error suspending user account: {str(e)}'
         }
     
-def unsuspend_user_account(user_id: int, admin_user_id: int):
+def unsuspend_user_account(user_id: int, admin_user_id: int, sb = None):
     """
     Unsuspend a user account.
     
@@ -355,7 +344,7 @@ def unsuspend_user_account(user_id: int, admin_user_id: int):
         dict: Response with success flag and message
     """
     try:
-        sb = _sb()
+        sb = sb or _sb()
         
         # Check if user exists and is suspended
         user_response = sb.table('users').select('*').eq('UserID', user_id).single().execute()

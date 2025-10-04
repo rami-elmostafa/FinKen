@@ -1,15 +1,9 @@
-import os
 from datetime import datetime
-from supabase import create_client, Client
-from passwordHash import hash_password
-
-from dotenv import load_dotenv
+from SupabaseClient import _sb
 from EmailUser import NewUserAdminNotification
-load_dotenv()
 
 #This is the function to create a new user in the database
-
-def create_new_user(first_name, last_name, email, dob, address):
+def create_new_user(first_name, last_name, email, dob, address, sb = None):
     """
     Create a new user registration request in the Supabase database.
     
@@ -25,18 +19,11 @@ def create_new_user(first_name, last_name, email, dob, address):
     """
     try:
         # Initialize Supabase client
-        # You'll need to set these environment variables
-        supabase_url = os.environ.get('SUPABASE_URL')
-        supabase_key = os.environ.get('SUPABASE_ANON_KEY')
-        
-        if not supabase_url or not supabase_key:
-            raise ValueError("Supabase URL and API key must be set in environment variables")
+        sb = sb or _sb()
         
         result = validate_user_input(first_name, last_name, email, dob, address)
         if not result.get('success', False):
             raise ValueError(result.get('message', 'Invalid user input'))
-        
-        supabase: Client = create_client(supabase_url, supabase_key)
         
         # Prepare and insert data into RegistrationRequests table
         user_data = {
@@ -48,7 +35,7 @@ def create_new_user(first_name, last_name, email, dob, address):
             'RequestDate': datetime.now().isoformat()
         } 
         # Insert data into RegistrationRequests table
-        response = supabase.table('registration_requests').insert(user_data).execute()
+        response = sb.table('registration_requests').insert(user_data).execute()
         
         if response.data:
             # Send notification to administrators about the new registration request
