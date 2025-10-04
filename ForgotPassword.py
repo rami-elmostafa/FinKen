@@ -1,9 +1,8 @@
-import os
 from SupabaseClient import _sb
 from passwordHash import *
 from FinishSignUp import _password_policy_ok
 
-def find_user(email: str, userid: int):
+def find_user(email: str, userid: int, sb = None):
     """
     Verify if a user exists in the database by email or username.
     
@@ -49,7 +48,7 @@ def find_user(email: str, userid: int):
             'error': str(e)
         }
     
-def security_answer(user_id: int, question_id: int, answer: str):
+def security_answer(user_id: int, question_id: int, answer: str, sb = None):
     """
     Verify the answer to a security question for a given user.
     
@@ -93,7 +92,7 @@ def security_answer(user_id: int, question_id: int, answer: str):
         }
     
 
-def reset_password(user_id: int, new_password: str):
+def reset_password(user_id: int, new_password: str, sb = None):
     """
     Reset the password for a given user.
     
