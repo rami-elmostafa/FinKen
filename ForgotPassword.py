@@ -26,36 +26,31 @@ def find_user(email: str, userid: int):
         
         supabase = create_client(supabase_url, supabase_key)
         
-        # Query the users table to check for existence
-        response = supabase.table('users').select('UserID', 'Email').eq('UserID', userid).execute()
+        #Query users table to match userid and email
+        response = supabase.table('users').select('UserID', 'Email').eq('UserID', userid).single().execute()
         
-        # Null data handling
-        rows = response.data or []
-        if not rows:
+        #verify user exists
+        if not response.data:
             return {
                 'success': False,
-                'message': 'No security answer found for this user and question'
+                'message': 'UserID not found'
+            }
+    
+        #check if email matches
+        user = response.data[0]
+        if user.get('Email') != email:
+            return {
+                'success': False, 
+                'message': 'Email does not match userid'
             }
         
-        if response.data:
-            user = response.data[0]
-            if user.get('Email') == email:
-                return {
-                    'success': True,
-                    'message': 'User exists',
-                    'user': user,  # Return the matching user
-                    'user_id': user.get('UserID')
-                }
-            else:
-                return {
-                    'success': False, 
-                    'message': 'Email does not match userid'
-                }
-        else:
-            return {
-                'success': False,
-                'message': 'User not found'
-            }
+        return {
+            'success': True,
+            'message': 'User exists',
+            'user': user,  # Return the matching user
+            'user_id': user.get('UserID')
+        }
+        
     except Exception as e:
         return {
             'success': False,
@@ -144,28 +139,29 @@ def reset_password(user_id: int, new_password: str):
         # Hash the new password
         hashed_password = hash_password(new_password)
 
-        # Ensure the new password is not the same as an old one
-        histoy_response = supabase.table('password_history').select('PasswordHash').eq("UserID", user_id).eq("PasswordHash", hashed_password).limit(1).execute()
-        
-        if histoy_response.data:
-            return {
-                'success': False,
-                'message': 'New password cannot be the same as a previous password'
-            }
+        # Verify that new password hasn't been used
+        for row in (supabase.table('password_history').select('PasswordHash').eq("UserID", user_id).execute()).data:
+            if verify_password(new_password, row['PasswordHash']):
+                return {
+                    'success': False,
+                    'message': 'New password cannot be the same as a previous password'
+                }
         
         # Update the user's password in the database
-        response = supabase.table('users').update({'PasswordHash': hashed_password}).eq('UserID', user_id).execute()
+        response = supabase.table('users').update({'PasswordHash': hashed_password}).eq('UserID', user_id).single().execute()
+        response = supabase.table('password_history').update({'PasswordHash': hashed_password}).eq('UserID', user_id).single().execute()
         
-        if response.data:
-            return {
-                'success': True,
-                'message': 'Password reset successfully'
-            }
-        else:
+        #check if update was successful
+        if not response.data:
             return {
                 'success': False,
                 'message': 'Failed to reset password'
             }
+        
+        return {
+            'success': True,
+            'message': 'Password reset successfully'
+        }
     except Exception as e:
         return {
             'success': False,
