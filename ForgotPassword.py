@@ -1,6 +1,6 @@
 import os
 from supabase import create_client, Client
-from passwordHash import hash_password
+from passwordHash import *
 from FinishSignUp import _password_policy_ok
 from dotenv import load_dotenv  # <-- 1. IMPORT the library
 load_dotenv()
@@ -82,37 +82,29 @@ def security_answer(user_id: int, question_id: int, answer: str):
             raise ValueError("Supabase URL and API key must be set in environment variables")
         
         supabase = create_client(supabase_url, supabase_key)
-
-        # Hash the provided answer
-        hashed_answer = hash_password(answer)
         
         # Query the security_answers table to verify the answer
-        response = supabase.table('security_answers').select('*').eq('UserID', user_id).eq('QuestionID', question_id).execute()
+        response = supabase.table('security_answers').select('*').eq('UserID', user_id).eq('QuestionID', question_id).single().execute()
 
-        # Null data handling
-        rows = response.data or []
-        if not rows:
+        if not response.data:
             return {
                 'success': False,
                 'message': 'No security answer found for this user and question'
             }
+
+        stored_hash = response.data.get('AnswerHash')
         
-        if response.data:
-            if response.data[0].get('AnswerHash') == hashed_answer:
-                return {
-                    'success': True,
-                    'message': 'Security answer verified'
-                }
-            else:
-                return {
-                    'success': False,
-                    'message': 'Incorrect answer to security question'
-                }
-        else:
+        if not verify_password(answer, stored_hash):
             return {
                 'success': False,
                 'message': 'Incorrect answer to security question'
             }
+
+        return {
+            'success': True,
+            'message': 'Security answer verified'
+        }
+    
     except Exception as e:
         return {
             'success': False,
