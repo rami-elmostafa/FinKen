@@ -27,15 +27,7 @@ def find_user(email: str, userid: int):
         supabase = create_client(supabase_url, supabase_key)
         
         # Query the users table to check for existence
-        response = supabase.table('users').select('UserID', 'Email').eq('UserID', userid).execute()
-        
-        # Null data handling
-        rows = response.data or []
-        if not rows:
-            return {
-                'success': False,
-                'message': 'No security answer found for this user and question'
-            }
+        response = supabase.table('users').select('UserID', 'Email').eq('UserID', userid).single().execute()
         
         if response.data:
             user = response.data[0]
