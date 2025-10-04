@@ -27,15 +27,7 @@ def find_user(email: str, userid: int):
         supabase = create_client(supabase_url, supabase_key)
         
         # Query the users table to check for existence
-        response = supabase.table('users').select('UserID', 'Email').eq('UserID', userid).execute()
-        
-        # Null data handling
-        rows = response.data or []
-        if not rows:
-            return {
-                'success': False,
-                'message': 'No security answer found for this user and question'
-            }
+        response = supabase.table('users').select('UserID', 'Email').eq('UserID', userid).single().execute()
         
         if response.data:
             user = response.data[0]
@@ -68,7 +60,7 @@ def security_answer(user_id: int, question_id: int, answer: str):
     
     Args:
         user_id (int): The user's ID    
-        question_id (int): The ID of the security question
+        question_id (int): The ID of the security question provided by form
         answer (str): The answer to verify
     Returns:
         dict: Response containing status and message
@@ -87,27 +79,19 @@ def security_answer(user_id: int, question_id: int, answer: str):
         hashed_answer = hash_password(answer)
         
         # Query the security_answers table to verify the answer
-        response = supabase.table('security_answers').select('*').eq('UserID', user_id).eq('QuestionID', question_id).execute()
-
-        # Null data handling
-        rows = response.data or []
-        if not rows:
+        response = supabase.table('security_answers').select('*').eq('UserID', user_id).eq('QuestionID', question_id).single().execute()
+        
+        if not response.data:
             return {
                 'success': False,
-                'message': 'No security answer found for this user and question'
+                'message': 'No security question found for this user'
             }
-        
-        if response.data:
-            if response.data[0].get('AnswerHash') == hashed_answer:
-                return {
-                    'success': True,
-                    'message': 'Security answer verified'
-                }
-            else:
-                return {
-                    'success': False,
-                    'message': 'Incorrect answer to security question'
-                }
+    
+        if response.data[0].get('AnswerHash') == hashed_answer:
+            return {
+                'success': True,
+                'message': 'Security answer verified'
+            }
         else:
             return {
                 'success': False,
