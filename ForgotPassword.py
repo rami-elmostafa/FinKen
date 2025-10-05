@@ -1,11 +1,8 @@
-import os
-from supabase import create_client, Client
+from SupabaseClient import _sb
 from passwordHash import *
 from FinishSignUp import _password_policy_ok
-from dotenv import load_dotenv  # <-- 1. IMPORT the library
-load_dotenv()
 
-def find_user(email: str, userid: int):
+def find_user(email: str, userid: int, sb = None):
     """
     Verify if a user exists in the database by email or username.
     
@@ -17,17 +14,11 @@ def find_user(email: str, userid: int):
     """
 
     try:
-        #Initialize Supabase client
-        supabase_url = os.environ.get('SUPABASE_URL')
-        supabase_key = os.environ.get('SUPABASE_ANON_KEY')
-        
-        if not supabase_url or not supabase_key:
-            raise ValueError("Supabase URL and API key must be set in environment variables")
-        
-        supabase = create_client(supabase_url, supabase_key)
+        # Initialize Supabase client
+        sb = sb or _sb()
         
         #Query users table to match userid and email
-        response = supabase.table('users').select('UserID', 'Email').eq('UserID', userid).single().execute()
+        response = sb.table('users').select('UserID', 'Email').eq('UserID', userid).single().execute()
         
         #Verify user exists
         if not response.data:
@@ -57,7 +48,7 @@ def find_user(email: str, userid: int):
             'error': str(e)
         }
     
-def security_answer(user_id: int, question_id: int, answer: str):
+def security_answer(user_id: int, answer: str, sb = None):
     """
     Verify the answer to a security question for a given user.
     
@@ -69,17 +60,11 @@ def security_answer(user_id: int, question_id: int, answer: str):
         dict: Response containing status and message
     """
     try:
-        #Initialize Supabase client
-        supabase_url = os.environ.get('SUPABASE_URL')
-        supabase_key = os.environ.get('SUPABASE_ANON_KEY')
-        
-        if not supabase_url or not supabase_key:
-            raise ValueError("Supabase URL and API key must be set in environment variables")
-        
-        supabase = create_client(supabase_url, supabase_key)
+        # Initialize Supabase client
+        sb = sb or _sb()
         
         #Query the security_answers table to verify the answer
-        response = supabase.table('security_answers').select('*').eq('UserID', user_id).eq('QuestionID', question_id).single().execute()
+        response = sb.table('security_answers').select('*').eq('UserID', user_id).single().execute()
 
         if not response.data:
             return {
@@ -107,7 +92,7 @@ def security_answer(user_id: int, question_id: int, answer: str):
         }
     
 
-def reset_password(user_id: int, new_password: str):
+def reset_password(user_id: int, new_password: str, sb = None):
     """
     Reset the password for a given user.
     
@@ -118,14 +103,8 @@ def reset_password(user_id: int, new_password: str):
         dict: Response containing status and message
     """
     try:
-        #Initialize Supabase client
-        supabase_url = os.environ.get('SUPABASE_URL')
-        supabase_key = os.environ.get('SUPABASE_ANON_KEY')
-        
-        if not supabase_url or not supabase_key:
-            raise ValueError("Supabase URL and API key must be set in environment variables")
-        
-        supabase = create_client(supabase_url, supabase_key)
+        # Initialize Supabase client
+        sb = sb or _sb()
 
         #Validate the new password against the policy
         is_valid, message = _password_policy_ok(new_password)
@@ -140,7 +119,7 @@ def reset_password(user_id: int, new_password: str):
         hashed_password = hash_password(new_password)
 
         #Verify that new password hasn't been used
-        for row in (supabase.table('password_history').select('PasswordHash').eq("UserID", user_id).execute()).data:
+        for row in (sb.table('password_history').select('PasswordHash').eq("UserID", user_id).execute()).data:
             if verify_password(new_password, row['PasswordHash']):
                 return {
                     'success': False,
@@ -148,8 +127,8 @@ def reset_password(user_id: int, new_password: str):
                 }
         
         #Update the user's password in the database
-        response = supabase.table('users').update({'PasswordHash': hashed_password}).eq('UserID', user_id).single().execute()
-        response = supabase.table('password_history').update({'PasswordHash': hashed_password}).eq('UserID', user_id).single().execute()
+        response = sb.table('users').update({'PasswordHash': hashed_password}).eq('UserID', user_id).single().execute()
+        response = sb.table('password_history').update({'PasswordHash': hashed_password}).eq('UserID', user_id).single().execute()
         
         #Check if update was successful
         if not response.data:

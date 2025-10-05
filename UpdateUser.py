@@ -1,5 +1,4 @@
-import os
-from supabase import create_client, Client
+from SupabaseClient import _sb
 
 def update_user(
         user_id: int | None = None, 
@@ -30,13 +29,8 @@ def update_user(
     
     #Attempt to initialize Supabase client
     try:
-        supabase_url = os.environ.get('SUPABASE_URL')
-        supabase_key = os.environ.get('SUPABASE_ANON_KEY')
-        
-        if not supabase_url or not supabase_key:
-            raise ValueError("Supabase URL and API key must be set in environment variables")
-        
-        supabase: Client = create_client(supabase_url, supabase_key)
+        # Initialize Supabase client
+        sb = sb or _sb()
     except Exception as e:
         return {"success": False, "message": f"Error initializing Supabase client: {str(e)}"}
     
@@ -59,7 +53,7 @@ def update_user(
         if not update_data:
             return {"success": False, "message": "No fields to update"}
         
-        response = supabase.table("users").update(update_data).eq("UserID", user_id).execute()
+        response = sb.table("users").update(update_data).eq("UserID", user_id).execute()
         
         if response.data and len(response.data) > 0:
             return {"success": True, "message": "User updated successfully", "data": response.data[0]}

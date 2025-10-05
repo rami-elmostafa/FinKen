@@ -1,20 +1,9 @@
-import os
 import math
 from datetime import datetime, timezone
-from supabase import create_client, Client
 from FinishSignUp import create_signup_invitation
-from dotenv import load_dotenv
+from SupabaseClient import _sb
 
-load_dotenv()
-
-def _sb() -> Client:
-    url = os.environ.get('SUPABASE_URL')
-    key = os.environ.get('SUPABASE_ANON_KEY')
-    if not url or not key:
-        raise RuntimeError("Supabase environment is not configured")
-    return create_client(url, key)
-
-def get_pending_registration_requests():
+def get_pending_registration_requests(sb = None):
     """
     Get all pending registration requests for admin review.
     
@@ -22,7 +11,7 @@ def get_pending_registration_requests():
         dict: Response with success flag and list of pending requests
     """
     try:
-        sb = _sb()
+        sb = sb or _sb()
         
         # Get all pending registration requests
         response = sb.table('registration_requests').select('*').eq('Status', 'Pending').order('RequestDate', desc=True).execute()
@@ -45,7 +34,7 @@ def get_pending_registration_requests():
             'requests': []
         }
 
-def get_all_registration_requests(page=1, per_page=20, search_term='', status_filter=''):
+def get_all_registration_requests(page=1, per_page=20, search_term='', status_filter='', sb = None):
     """
     Get all registration requests (pending, approved, rejected) for admin review with pagination.
     
@@ -59,7 +48,7 @@ def get_all_registration_requests(page=1, per_page=20, search_term='', status_fi
         dict: Response with success flag, list of requests, and pagination info
     """
     try:
-        sb = _sb()
+        sb = sb or _sb()
         
         # Start building the query
         query = sb.table('registration_requests').select('''
@@ -140,7 +129,7 @@ def get_all_registration_requests(page=1, per_page=20, search_term='', status_fi
             'pagination': {'current_page': 1, 'total_pages': 1, 'total_requests': 0}
         }
 
-def approve_registration_request(request_id: int, reviewer_user_id: int, expires_in_hours: int = 48):
+def approve_registration_request(request_id: int, reviewer_user_id: int, expires_in_hours: int = 48, sb = None):
     """
     Approve a registration request and send signup invitation email.
     
@@ -153,7 +142,7 @@ def approve_registration_request(request_id: int, reviewer_user_id: int, expires
         dict: Response with success flag and message
     """
     try:
-        sb = _sb()
+        sb = sb or _sb()
         
         # Check if request exists and is pending
         req_response = sb.table('registration_requests').select('*').eq('RequestID', request_id).single().execute()
@@ -183,7 +172,7 @@ def approve_registration_request(request_id: int, reviewer_user_id: int, expires
             'message': f'Error approving registration request: {str(e)}'
         }
 
-def reject_registration_request(request_id: int, reviewer_user_id: int, rejection_reason: str = None):
+def reject_registration_request(request_id: int, reviewer_user_id: int, rejection_reason: str = None, sb = None):
     """
     Reject a registration request.
     
@@ -196,7 +185,7 @@ def reject_registration_request(request_id: int, reviewer_user_id: int, rejectio
         dict: Response with success flag and message
     """
     try:
-        sb = _sb()
+        sb = sb or _sb()
         
         # Check if request exists and is pending
         req_response = sb.table('registration_requests').select('*').eq('RequestID', request_id).single().execute()
@@ -245,7 +234,7 @@ def reject_registration_request(request_id: int, reviewer_user_id: int, rejectio
             'message': f'Error rejecting registration request: {str(e)}'
         }
 
-def get_registration_request_details(request_id: int):
+def get_registration_request_details(request_id: int, sb = None):
     """
     Get detailed information about a specific registration request.
     
@@ -256,7 +245,7 @@ def get_registration_request_details(request_id: int):
         dict: Response with success flag and request details
     """
     try:
-        sb = _sb()
+        sb = sb or _sb()
         
         # Get the registration request with reviewer information
         response = sb.table('registration_requests').select('''
@@ -281,41 +270,86 @@ def get_registration_request_details(request_id: int):
             'message': f'Error retrieving registration request details: {str(e)}'
         }
     
-def suspend_user_account(user_id: int, admin_user_id: int, reason: str = None):
+def suspend_user_account(user_id: int, admin_user_id: int, suspension_end_date: datetime.date, reason: str = None, sb = None):
     """
     Suspend a user account.
     
     Args:
         user_id (int): The UserID of the account to suspend
         admin_user_id (int): The UserID of the administrator performing the suspension
+
         reason (str): Optional reason for suspension
         
     Returns:
         dict: Response with success flag and message
     """
     try:
-        sb = _sb()
+        # Initialize Supabase client
+        sb = sb or _sb()
         
-        # Check if user exists and is active
+        # Validate suspension_end_date format
+        if not suspension_end_date:
+            return {
+                'success': False,
+                'message': 'Suspension end date is required'
+            }
+        
+        try:
+            suspension_end_date = datetime.strptime(suspension_end_date, '%Y-%m-%d')
+        except ValueError:
+            return {
+                'success': False,
+                'message': 'Invalid date format. Use YYYY-MM-DD.'
+            }
+            
+        if suspension_end_date < datetime.now():
+            return {
+                'success': False,
+                'message': 'Suspension end date must be in the future'
+            }
+
+        # Check if admin user exists and is an administrator
+        response = sb.table('users').select('*').eq('UserID', admin_user_id).single().execute()
+
+        if not response.data:
+            return {
+                'success': False,
+                'message': 'Admin user not found'
+            }
+        
+        if not response.data.get('RoleID') == 1:
+            return {
+                'success': False,
+                'message': 'Only administrators can suspend user accounts'
+            }
+
+        
+        # Check if user exists
         user_response = sb.table('users').select('*').eq('UserID', user_id).single().execute()
-        
         if not user_response.data:
             return {
                 'success': False,
                 'message': 'User not found'
             }
         
+        # Check if the user has been activated
         user_data = user_response.data
+        if not user_data.get('IsActive', False):
+            return {
+                'success': False,
+                'message': 'User account has not been activated'
+            }
         
-        if not user_data.get('IsActive', True):
+        # Check if user is already suspended
+        if user_data.get('IsSuspended', False):
             return {
                 'success': False,
                 'message': 'User account is already suspended'
             }
         
-        # Update the user's IsActive status
+        # Update the user's IsSuspended status
         update_data = {
-            'IsActive': False,
+            'IsSuspended': True,
             'LastModifiedBy': admin_user_id,
             'LastModifiedDate': datetime.now(timezone.utc).isoformat()
         }
@@ -324,18 +358,18 @@ def suspend_user_account(user_id: int, admin_user_id: int, reason: str = None):
         if reason:
             update_data['SuspensionReason'] = reason
         
+        # Check if update was successful
         response = sb.table('users').update(update_data).eq('UserID', user_id).execute()
-        
-        if response.data:
-            return {
-                'success': True,
-                'message': 'User account suspended successfully'
-            }
-        else:
+        if not response.data:
             return {
                 'success': False,
                 'message': 'Failed to suspend user account'
             }
+        
+        return {
+            'success': True,
+            'message': 'User account suspended successfully'
+        }
         
     except Exception as e:
         return {
@@ -343,19 +377,19 @@ def suspend_user_account(user_id: int, admin_user_id: int, reason: str = None):
             'message': f'Error suspending user account: {str(e)}'
         }
     
-def unsuspend_user_account(user_id: int, admin_user_id: int):
+def unsuspend_user_account(user_id: int, admin_user_id: int = None, sb = None):
     """
     Unsuspend a user account.
     
     Args:
         user_id (int): The UserID of the account to unsuspend
-        admin_user_id (int): The UserID of the administrator performing the unsuspension
+        admin_user_id (int): The UserID of the administrator performing the unsuspension (Optional)
         
     Returns:
         dict: Response with success flag and message
     """
     try:
-        sb = _sb()
+        sb = sb or _sb()
         
         # Check if user exists and is suspended
         user_response = sb.table('users').select('*').eq('UserID', user_id).single().execute()
@@ -366,34 +400,49 @@ def unsuspend_user_account(user_id: int, admin_user_id: int):
                 'message': 'User not found'
             }
         
-        user_data = user_response.data
+        # Check if admin user exists and is an administrator
+        if admin_user_id:
+            response = sb.table('users').select('*').eq('UserID', admin_user_id).single().execute()
+            if not response.data or response.data.get('RoleID') != 1:
+                return {
+                    'success': False,
+                    'message': 'Only administrators can unsuspend user accounts'
+                }
+        elif not user_response.data.get('SuspensionEndDate') == datetime.now():
+            return {
+                'success': False,
+                'message': 'Only administrators can unsuspend user accounts before the suspension end date'
+            }
         
+        # Check if the user is already suspended
+        user_data = user_response.data
         if user_data.get('IsActive', True):
             return {
                 'success': False,
                 'message': 'User account is not suspended'
             }
         
-        # Update the user's IsActive status
+        # Update the user's IsSuspended status
         update_data = {
-            'IsActive': True,
+            'IsSuspended': False,
             'SuspensionReason': None,
+            'SuspensionEndDate': None,
             'LastModifiedBy': admin_user_id,
             'LastModifiedDate': datetime.now(timezone.utc).isoformat()
         }
-        
         response = sb.table('users').update(update_data).eq('UserID', user_id).execute()
-        
-        if response.data:
-            return {
-                'success': True,
-                'message': 'User account unsuspended successfully'
-            }
-        else:
+
+        # Check if update was successful
+        if  not response.data:
             return {
                 'success': False,
                 'message': 'Failed to unsuspend user account'
             }
+        
+        return {
+            'success': True,
+            'message': 'User account unsuspended successfully'
+        }
         
     except Exception as e:
         return {

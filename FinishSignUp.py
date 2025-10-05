@@ -1,16 +1,10 @@
 import os
 import secrets
 from datetime import datetime, timedelta, timezone
-from supabase import create_client, Client
+from supabase import Client
 from passwordHash import hash_password
 from EmailUser import send_email
-
-def _sb() -> Client:
-    url = os.environ.get('SUPABASE_URL')
-    key = os.environ.get('SUPABASE_ANON_KEY')
-    if not url or not key:
-        raise RuntimeError("Supabase environment is not configured")
-    return create_client(url, key)
+from SupabaseClient import _sb
 
 def _now_utc():
     return datetime.now(timezone.utc)
@@ -30,7 +24,7 @@ def _password_policy_ok(pw: str):
 def _slugify_name(s: str) -> str:
     return ''.join(ch for ch in s.lower() if ch.isalpha())
 
-def _generate_username(first_name: str, last_name: str, created_at: datetime, sb: Client) -> str:
+def _generate_username(first_name: str, last_name: str, created_at: datetime, sb: Client = None) -> str:
     base = f"{_slugify_name(first_name)[:1]}{_slugify_name(last_name)}{created_at.strftime('%m%y')}"
     candidate = base
     suffix = 1
@@ -41,8 +35,8 @@ def _generate_username(first_name: str, last_name: str, created_at: datetime, sb
         suffix += 1
         candidate = f"{base}{suffix}"
 
-def create_signup_invitation(request_id: int, reviewer_user_id: int, expires_in_hours: int = 48):
-    sb = _sb()
+def create_signup_invitation(request_id: int, reviewer_user_id: int, expires_in_hours: int = 48, sb = None):
+    sb = sb or _sb()
     # Load request
     req = sb.table('registration_requests').select('*').eq('RequestID', request_id).single().execute()
     if not req.data:
@@ -83,8 +77,8 @@ def create_signup_invitation(request_id: int, reviewer_user_id: int, expires_in_
         return {'success': False, 'message': f"Invitation created but email failed: {email_res.get('error')}"}
     return {'success': True, 'message': 'Invitation created and email sent'}
 
-def get_signup_context(token: str):
-    sb = _sb()
+def get_signup_context(token: str, sb = None):
+    sb = sb or _sb()
     inv = sb.table('signup_invitations').select('*').eq('Token', token).single().execute()
     if not inv.data:
         return {'success': False, 'message': 'Invalid signup link'}
@@ -102,8 +96,8 @@ def get_signup_context(token: str):
         'security_questions': qs.data or [],
     }
 
-def finalize_signup(token: str, password: str, confirm_password: str, question_id: int, answer: str):
-    sb = _sb()
+def finalize_signup(token: str, password: str, confirm_password: str, question_id: int, answer: str, sb = None):
+    sb = sb or _sb()
     # Validate token and request
     ctx = get_signup_context(token)
     if not ctx.get('success'):

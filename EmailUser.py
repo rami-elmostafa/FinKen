@@ -3,11 +3,7 @@
 import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
-from dotenv import load_dotenv
-from supabase import create_client, Client
-
-# Load environment variables
-load_dotenv()
+from SupabaseClient import _sb
 
 def send_email(sender_email, sender_name, receiver_email, subject_line, body):
     """
@@ -67,7 +63,7 @@ def send_email(sender_email, sender_name, receiver_email, subject_line, body):
             'error': str(e)
         }
 
-def NewUserAdminNotification(first_name, last_name, email):
+def NewUserAdminNotification(first_name, last_name, email, sb = None):
     """
     Send notification to all administrators about a new user registration request
     
@@ -82,20 +78,11 @@ def NewUserAdminNotification(first_name, last_name, email):
     
     try:
         # Initialize Supabase client
-        supabase_url = os.environ.get('SUPABASE_URL')
-        supabase_key = os.environ.get('SUPABASE_ANON_KEY')
-        
-        if not supabase_url or not supabase_key:
-            return {
-                'success': False,
-                'error': 'Database configuration error - Supabase credentials not found'
-            }
-        
-        supabase: Client = create_client(supabase_url, supabase_key)
+        sb = sb or _sb()
         
         # Query to get all administrators' emails
         # Join users table with roles table to get users with administrator role
-        response = supabase.table('users').select('Email, FirstName, LastName').eq('RoleID', 1).eq('IsActive', True).execute()
+        response = sb.table('users').select('Email, FirstName, LastName').eq('RoleID', 1).eq('IsActive', True).execute()
         
         if not response.data:
             return {

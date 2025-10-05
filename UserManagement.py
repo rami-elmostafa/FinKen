@@ -1,15 +1,10 @@
 # UserManagement.py
 
-import os
 import math
 from datetime import datetime, timedelta
-from supabase import create_client, Client
-from dotenv import load_dotenv
+from SupabaseClient import _sb
 
-# Load environment variables
-load_dotenv()
-
-def get_users_paginated(page=1, per_page=10, search_term='', status_filter=''):
+def get_users_paginated(page=1, per_page=10, search_term='', status_filter='', sb = None):
     """
     Get users with pagination and filtering
     
@@ -24,19 +19,10 @@ def get_users_paginated(page=1, per_page=10, search_term='', status_filter=''):
     """
     try:
         # Initialize Supabase client
-        supabase_url = os.environ.get('SUPABASE_URL')
-        supabase_key = os.environ.get('SUPABASE_ANON_KEY')
-        
-        if not supabase_url or not supabase_key:
-            return {
-                'success': False,
-                'message': 'Database configuration error - Supabase credentials not found'
-            }
-        
-        supabase: Client = create_client(supabase_url, supabase_key)
+        sb = sb or _sb()
         
         # Start building the query
-        query = supabase.table('users').select(
+        query = sb.table('users').select(
             'UserID, Username, FirstName, LastName, Email, DOB, Address, '
             'IsActive, IsSuspended, DateCreated, ProfilePictureURL, '
             'roles(RoleName)'
@@ -63,7 +49,7 @@ def get_users_paginated(page=1, per_page=10, search_term='', status_filter=''):
             query = query.eq('IsSuspended', True)
         
         # Get total count for pagination (before applying limit/offset)
-        count_query = supabase.table('users').select('UserID', count='exact')
+        count_query = sb.table('users').select('UserID', count='exact')
         
         # Apply same filters to count query
         if search_term:
@@ -148,7 +134,7 @@ def get_users_paginated(page=1, per_page=10, search_term='', status_filter=''):
             'message': f'Error fetching users: {str(e)}'
         }
 
-def update_user_status(user_id, action):
+def update_user_status(user_id, action, sb = None):
     """
     Update user status (activate, deactivate, suspend, unsuspend)
     
@@ -161,16 +147,7 @@ def update_user_status(user_id, action):
     """
     try:
         # Initialize Supabase client
-        supabase_url = os.environ.get('SUPABASE_URL')
-        supabase_key = os.environ.get('SUPABASE_ANON_KEY')
-        
-        if not supabase_url or not supabase_key:
-            return {
-                'success': False,
-                'message': 'Database configuration error - Supabase credentials not found'
-            }
-        
-        supabase: Client = create_client(supabase_url, supabase_key)
+        sb = sb or _sb()
         
         # Determine the update values based on action
         update_data = {}
@@ -190,7 +167,7 @@ def update_user_status(user_id, action):
             }
         
         # Update the user
-        response = supabase.table('users').update(update_data).eq('UserID', user_id).execute()
+        response = sb.table('users').update(update_data).eq('UserID', user_id).execute()
         
         if response.data:
             return {
@@ -209,7 +186,7 @@ def update_user_status(user_id, action):
             'message': f'Error updating user status: {str(e)}'
         }
 
-def get_user_by_id(user_id):
+def get_user_by_id(user_id, sb = None):
     """
     Get a specific user by ID
     
@@ -221,19 +198,10 @@ def get_user_by_id(user_id):
     """
     try:
         # Initialize Supabase client
-        supabase_url = os.environ.get('SUPABASE_URL')
-        supabase_key = os.environ.get('SUPABASE_ANON_KEY')
-        
-        if not supabase_url or not supabase_key:
-            return {
-                'success': False,
-                'message': 'Database configuration error - Supabase credentials not found'
-            }
-        
-        supabase: Client = create_client(supabase_url, supabase_key)
+        sb = sb or _sb()
         
         # Get the user
-        response = supabase.table('users').select(
+        response = sb.table('users').select(
             'UserID, Username, FirstName, LastName, Email, DOB, Address, RoleID, '
             'IsActive, IsSuspended, DateCreated, roles(RoleID, RoleName)'
         ).eq('UserID', user_id).execute()
@@ -279,7 +247,7 @@ def get_user_by_id(user_id):
             'message': f'Error fetching user: {str(e)}'
         }
 
-def get_expiring_passwords(days_ahead=30):
+def get_expiring_passwords(days_ahead=30, sb = None):
     """
     Get users whose passwords will expire within the specified number of days
     
@@ -291,23 +259,14 @@ def get_expiring_passwords(days_ahead=30):
     """
     try:
         # Initialize Supabase client
-        supabase_url = os.environ.get('SUPABASE_URL')
-        supabase_key = os.environ.get('SUPABASE_ANON_KEY')
-        
-        if not supabase_url or not supabase_key:
-            return {
-                'success': False,
-                'message': 'Database configuration error - Supabase credentials not found'
-            }
-        
-        supabase: Client = create_client(supabase_url, supabase_key)
+        sb = sb or _sb()
         
         # Calculate the cutoff date
         cutoff_date = datetime.now() + timedelta(days=days_ahead)
         cutoff_date_str = cutoff_date.isoformat()
         
         # Get users whose passwords expire within the specified timeframe
-        response = supabase.table('users').select(
+        response = sb.table('users').select(
             'UserID, Username, FirstName, LastName, Email, PasswordExpiryDate, '
             'IsActive, roles(RoleName)'
         ).lte('PasswordExpiryDate', cutoff_date_str).eq('IsActive', True).order('PasswordExpiryDate').execute()
@@ -348,7 +307,7 @@ def get_expiring_passwords(days_ahead=30):
             'message': f'Error fetching expiring passwords: {str(e)}'
         }
 
-def get_all_roles():
+def get_all_roles(sb = None):
     """
     Get all available roles from the database
     
@@ -357,19 +316,10 @@ def get_all_roles():
     """
     try:
         # Initialize Supabase client
-        supabase_url = os.environ.get('SUPABASE_URL')
-        supabase_key = os.environ.get('SUPABASE_ANON_KEY')
-        
-        if not supabase_url or not supabase_key:
-            return {
-                'success': False,
-                'message': 'Database configuration error - Supabase credentials not found'
-            }
-        
-        supabase: Client = create_client(supabase_url, supabase_key)
+        sb = sb or _sb()
         
         # Get all roles
-        response = supabase.table('roles').select('RoleID, RoleName').order('RoleName').execute()
+        response = sb.table('roles').select('RoleID, RoleName').order('RoleName').execute()
         
         if response.data:
             return {
