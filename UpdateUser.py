@@ -8,6 +8,7 @@ def update_user(
         dob: str | None = None, 
         address: str | None = None, 
         roleid: int | None = None, 
+        sb = None
     ):
     """
     Update user information in the Supabase database.
