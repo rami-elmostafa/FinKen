@@ -48,7 +48,7 @@ def find_user(email: str, userid: int, sb = None):
             'error': str(e)
         }
     
-def security_answer(user_id: int, question_id: int, answer: str, sb = None):
+def security_answer(user_id: int, answer: str, sb = None):
     """
     Verify the answer to a security question for a given user.
     
@@ -64,7 +64,7 @@ def security_answer(user_id: int, question_id: int, answer: str, sb = None):
         sb = sb or _sb()
         
         #Query the security_answers table to verify the answer
-        response = sb.table('security_answers').select('*').eq('UserID', user_id).eq('QuestionID', question_id).single().execute()
+        response = sb.table('security_answers').select('*').eq('UserID', user_id).single().execute()
 
         if not response.data:
             return {
