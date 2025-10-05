@@ -1,8 +1,10 @@
 import types
 import pytest
 
+#This file is to fake a supabase client for testing purposes
+
 class FakeQuery:
-    """Mimics a chain like .select(...).eq(...).single().execute()."""
+    """Fakes supabase chain queries to prevent breaking the functions being tested."""
     def __init__(self, result):
         self._result = result
     def select(self, *_args, **_kwargs): 
@@ -19,35 +21,39 @@ class FakeQuery:
         return self
     def insert(self, *_a, **_k): 
         return self
-    #Fake supabase object with .data attribute
+    
+    #Returns fake supabase object with .data attribute
     def execute(self):
+        result = self._result
+        # If the result is a list, return next item each time execute is called
+        if isinstance(result, list):
+            next_item = result.pop(0) if result else None
+            return types.SimpleNamespace(data=next_item)
+        # Otherwise return the single result
         return types.SimpleNamespace(data=self._result)
 
 class FakeTableRouter:
     """Returns a predefined FakeQuery for each table and operation."""
     def __init__(self, responses):
-        self.responses = responses  # dict like {('users','select'): ..., ('users','update'): ...}
-        self._current_table = None
-        self._current_op = None
-        self._pending_update = False
+        self.responses = responses  #dict like {('users','select'): ..., ('users','update'): ...}
+        self.current_table = None
+        self.current_op = None
+        self.pending_update = False
 
     def table(self, name):
-        self._current_table = name
-        self._current_op = 'select'
-        self._pending_update = False
+        self.current_table = name
+        self.current_op = 'select'
+        self.pending_update = False
         return self
 
-    # Methods used in your code path:
     def select(self, *_a, **_k):
-        self._current_op = 'select'
-        return FakeQuery(self.responses.get((self._current_table, 'select')))
-    def update(self, *_a, **_k):
-        self._current_op = 'update'
-        return FakeQuery(self.responses.get((self._current_table, 'update')))
-    
-    # If you need history or other ops in other tests:
+        return FakeQuery(self.responses.get((self.current_table, 'select')))
     def insert(self, *_a, **_k):
-        return FakeQuery(self.responses.get((self._current_table, 'insert')))
+        return FakeQuery(self.responses.get((self.current_table, 'insert')))
+    def update(self, *_a, **_k):
+        return FakeQuery(self.responses.get((self.current_table, 'update')))
+    def delete(self, *_a, **_k):
+        return FakeQuery(self.responses.get((self.current_table, 'delete')))
 
 @pytest.fixture
 def fake_sb_factory():
