@@ -1,7 +1,7 @@
 from SupabaseClient import _sb
 from passwordHash import verify_password
 
-def sign_in_user(username, password):
+def sign_in_user(username, password, sb = None):
     """
     Authenticate a user by checking their username and password against the database.
     
