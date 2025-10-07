@@ -430,13 +430,20 @@ def expiring_passwords():
         flash('Access denied. Administrator privileges required.', 'error')
         return redirect(url_for('index'))
     
-    # Get users with passwords expiring in the next 30 days
-    result = get_expiring_passwords(days_ahead=30)
+    # Get filter parameter from query string
+    show_all = request.args.get('show_all', 'true').lower() == 'true'
+    days_ahead = int(request.args.get('days_ahead', 30))
+    
+    # Get users based on filter
+    result = get_expiring_passwords(days_ahead=days_ahead, show_all=show_all)
     
     user_context = get_user_context()
     return render_template('ExpiringPasswords.html', 
                          users=result.get('users', []),
                          total_count=result.get('total_count', 0),
+                         expiring_count=result.get('expiring_count', 0),
+                         show_all=show_all,
+                         days_ahead=days_ahead,
                          **user_context)
 
 @app.route('/api/users')

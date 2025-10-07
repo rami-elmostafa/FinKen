@@ -1,7 +1,7 @@
 # UserManagement.py
 
 import math
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from SupabaseClient import _sb
 
 def get_users_paginated(page=1, per_page=10, search_term='', status_filter='', sb = None):
@@ -278,39 +278,49 @@ def get_user_by_id(user_id, sb = None):
             'message': f'Error fetching user: {str(e)}'
         }
 
-def get_expiring_passwords(days_ahead=30, sb = None):
+def get_expiring_passwords(days_ahead=30, show_all=False, sb = None):
     """
     Get users whose passwords will expire within the specified number of days
     
     Args:
         days_ahead (int): Number of days to look ahead for expiring passwords
+        show_all (bool): If True, show all users regardless of expiry date
     
     Returns:
-        dict: Contains users with expiring passwords and success status
+        dict: Contains users with password expiry information and success status
     """
     try:
         # Initialize Supabase client
         sb = sb or _sb()
         
-        # Calculate the cutoff date
-        cutoff_date = datetime.now() + timedelta(days=days_ahead)
-        cutoff_date_str = cutoff_date.isoformat()
-        
-        # Get users whose passwords expire within the specified timeframe
-        response = sb.table('users').select(
-            'UserID, Username, FirstName, LastName, Email, PasswordExpiryDate, '
-            'IsActive, roles(RoleName)'
-        ).lte('PasswordExpiryDate', cutoff_date_str).eq('IsActive', True).order('PasswordExpiryDate').execute()
+        if show_all:
+            # Get all active users
+            response = sb.table('users').select(
+                'UserID, Username, FirstName, LastName, Email, PasswordExpiryDate, '
+                'IsActive, roles(RoleName)'
+            ).eq('IsActive', True).order('PasswordExpiryDate', desc=False).execute()
+        else:
+            # Calculate the cutoff date
+            cutoff_date = datetime.now(timezone.utc) + timedelta(days=days_ahead)
+            cutoff_date_str = cutoff_date.isoformat()
+            
+            # Get users whose passwords expire within the specified timeframe
+            response = sb.table('users').select(
+                'UserID, Username, FirstName, LastName, Email, PasswordExpiryDate, '
+                'IsActive, roles(RoleName)'
+            ).lte('PasswordExpiryDate', cutoff_date_str).eq('IsActive', True).order('PasswordExpiryDate').execute()
         
         if not response.data:
             users = []
         else:
             users = []
             for user in response.data:
-                # Only include users that actually have a password expiry date
+                # Calculate days until expiry if user has an expiry date
                 if user.get('PasswordExpiryDate'):
                     expiry_date = datetime.fromisoformat(user['PasswordExpiryDate'].replace('Z', '+00:00'))
-                    days_until_expiry = (expiry_date - datetime.now()).days
+                    # Make datetime.now() timezone-aware to match the expiry_date
+                    now = datetime.now(timezone.utc)
+                    days_until_expiry = (expiry_date - now).days
                     
                     user_data = {
                         'UserID': user.get('UserID'),
@@ -322,20 +332,45 @@ def get_expiring_passwords(days_ahead=30, sb = None):
                         'DaysUntilExpiry': days_until_expiry,
                         'RoleName': user.get('roles', {}).get('RoleName') if user.get('roles') else 'Unknown',
                         'IsExpired': days_until_expiry < 0,
-                        'IsExpiringSoon': 0 <= days_until_expiry <= 7
+                        'IsExpiringSoon': 0 <= days_until_expiry <= 7,
+                        'HasExpiryDate': True
                     }
-                    users.append(user_data)
+                else:
+                    # User has no expiry date
+                    user_data = {
+                        'UserID': user.get('UserID'),
+                        'Username': user.get('Username'),
+                        'FirstName': user.get('FirstName'),
+                        'LastName': user.get('LastName'),
+                        'Email': user.get('Email'),
+                        'PasswordExpiryDate': None,
+                        'DaysUntilExpiry': None,
+                        'RoleName': user.get('roles', {}).get('RoleName') if user.get('roles') else 'Unknown',
+                        'IsExpired': False,
+                        'IsExpiringSoon': False,
+                        'HasExpiryDate': False
+                    }
+                
+                users.append(user_data)
+        
+        # Count users with expiring passwords
+        expiring_count = sum(1 for user in users if user.get('HasExpiryDate') and 
+                           user.get('DaysUntilExpiry') is not None and 
+                           user.get('DaysUntilExpiry') <= days_ahead)
         
         return {
             'success': True,
             'users': users,
-            'total_count': len(users)
+            'total_count': len(users),
+            'expiring_count': expiring_count,
+            'show_all': show_all,
+            'days_ahead': days_ahead
         }
         
     except Exception as e:
         return {
             'success': False,
-            'message': f'Error fetching expiring passwords: {str(e)}'
+            'message': f'Error fetching password expiry data: {str(e)}'
         }
 
 def get_all_roles(sb = None):
@@ -381,7 +416,7 @@ def check_and_unsuspend_users(sb = None):
         sb = sb or _sb()
         
         # Get current timestamp
-        current_time = datetime.now().isoformat()
+        current_time = datetime.now(timezone.utc).isoformat()
         
         # Find users who are suspended but their suspension end date has passed
         response = sb.table('users').select(

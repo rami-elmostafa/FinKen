@@ -1336,6 +1336,28 @@ body {
     color: white;
 }
 
+.status-no-expiry {
+    background-color: #6c757d;
+    color: white;
+}
+
+.no-expiry {
+    color: #6c757d;
+    font-style: italic;
+}
+
+.expiry-summary {
+    flex: 1;
+    text-align: right;
+    font-weight: 600;
+}
+
+.filter-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 /* Home Page Specific Styles */
 .main-content {
     padding: 20px;
