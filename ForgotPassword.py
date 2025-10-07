@@ -1,6 +1,6 @@
 from SupabaseClient import _sb
 from passwordHash import *
-from FinishSignUp import _password_policy_ok
+from FinishSignUp import _password_policy_ok, _now_utc
 
 def find_user(email: str, userid: int, sb = None):
     """
@@ -8,17 +8,17 @@ def find_user(email: str, userid: int, sb = None):
     
     Args:
         email (str): The user's email address
-        userid (str): The user's suerid
+        userid (str): The user'userid
     Returns:
         dict: Response containing status and message
     """
 
     try:
-        # Initialize Supabase client
+        #Initialize Supabase client
         sb = sb or _sb()
         
         #Query users table to match userid and email
-        response = sb.table('users').select('UserID', 'Email').eq('UserID', userid).single().execute()
+        response = sb.table('users').select('UserID, Email').eq('UserID', userid).single().execute()
         
         #Verify user exists
         if not response.data:
@@ -26,27 +26,25 @@ def find_user(email: str, userid: int, sb = None):
                 'success': False,
                 'message': 'UserID not found'
             }
-    
         #Check if email matches
-        user = response.data[0]
+        user = response.data
         if user.get('Email') != email:
             return {
                 'success': False, 
                 'message': 'Email does not match userid'
             }
-        
         return {
             'success': True,
             'message': 'User exists',
-            'user': user,  # Return the matching user
-            'user_id': user.get('UserID')
         }
         
     except Exception as e:
         return {
             'success': False,
-            'error': str(e)
+            'error': str(e),
+            'message': str(e)
         }
+    
     
 def security_answer(user_id: int, answer: str, sb = None):
     """
@@ -60,11 +58,11 @@ def security_answer(user_id: int, answer: str, sb = None):
         dict: Response containing status and message
     """
     try:
-        # Initialize Supabase client
+        #Initialize Supabase client
         sb = sb or _sb()
         
         #Query the security_answers table to verify the answer
-        response = sb.table('security_answers').select('*').eq('UserID', user_id).single().execute()
+        response = sb.table('user_security_answers').select('*').eq('UserID', user_id).single().execute()
 
         if not response.data:
             return {
@@ -92,7 +90,7 @@ def security_answer(user_id: int, answer: str, sb = None):
         }
     
 
-def reset_password(user_id: int, new_password: str, sb = None):
+def change_password(userid: int, new_password: str, sb = None):
     """
     Reset the password for a given user.
     
@@ -103,7 +101,7 @@ def reset_password(user_id: int, new_password: str, sb = None):
         dict: Response containing status and message
     """
     try:
-        # Initialize Supabase client
+        #Initialize Supabase client
         sb = sb or _sb()
 
         #Validate the new password against the policy
@@ -119,16 +117,17 @@ def reset_password(user_id: int, new_password: str, sb = None):
         hashed_password = hash_password(new_password)
 
         #Verify that new password hasn't been used
-        for row in (sb.table('password_history').select('PasswordHash').eq("UserID", user_id).execute()).data:
+        for row in (sb.table('password_history').select('PasswordHash').eq("UserID", userid).execute()).data:
             if verify_password(new_password, row['PasswordHash']):
                 return {
                     'success': False,
                     'message': 'New password cannot be the same as a previous password'
                 }
-        
+            
         #Update the user's password in the database
-        response = sb.table('users').update({'PasswordHash': hashed_password}).eq('UserID', user_id).single().execute()
-        response = sb.table('password_history').update({'PasswordHash': hashed_password}).eq('UserID', user_id).single().execute()
+        response = sb.table('users').update({'PasswordHash': hashed_password}).eq('UserID', userid).execute()
+        created_at = _now_utc()
+        response = sb.table('password_history').insert({'PasswordHash': hashed_password, 'UserID': userid, 'DateSet': created_at.isoformat()}).execute()
         
         #Check if update was successful
         if not response.data:
@@ -146,3 +145,5 @@ def reset_password(user_id: int, new_password: str, sb = None):
             'success': False,
             'error': str(e)
         }
+
+    
