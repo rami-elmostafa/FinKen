@@ -32,7 +32,7 @@ pip install -r requirements.txt
 
 3. Run the app:
 ```bash
-python app.py
+flask run
 ```
 
 4. Open http://localhost:8000
