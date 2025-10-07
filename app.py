@@ -128,17 +128,23 @@ def forgot_password():
     elif request.method == 'POST':
         # Get form data
         email = request.form.get('email')
-        userid = request.form.get('userid')
+        username = request.form.get('username')
 
         # Validate input
-        validation_result = find_user(email, userid)
+        if not email or not username:
+            flash('Error: Email and username are required', 'error')
+            return render_template('ForgotPassword.html')
+
+        # Validate input
+        validation_result = find_user(email, username)
 
         if not validation_result['success']:
             flash(f'Error: {validation_result["message"]}', 'error')
             return render_template('ForgotPassword.html')
         
-        # User found, route to security question
-        return redirect(url_for('security_question', userid=userid))
+        # User found, get the actual UserID and route to security question
+        user_id = validation_result.get('user_id')
+        return redirect(url_for('security_question', userid=user_id))
 
 @app.route('/SecurityQuestion/<int:userid>', methods=['GET', 'POST'])
 def security_question(userid):

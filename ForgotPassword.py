@@ -2,13 +2,13 @@ from SupabaseClient import _sb
 from passwordHash import *
 from FinishSignUp import _password_policy_ok, _now_utc
 
-def find_user(email: str, userid: int, sb = None):
+def find_user(email: str, username: str, sb = None):
     """
     Verify if a user exists in the database by email and username.
     
     Args:
         email (str): The user's email address
-        userid (str): The user'userid
+        username (str): The user's username
     Returns:
         dict: Response containing status and message
     """
@@ -17,14 +17,14 @@ def find_user(email: str, userid: int, sb = None):
         #Initialize Supabase client
         sb = sb or _sb()
         
-        #Query users table to match userid and email
-        response = sb.table('users').select('UserID, Email').eq('UserID', userid).execute()
+        #Query users table to match username and email
+        response = sb.table('users').select('UserID, Email, Username').eq('Username', username).execute()
         
         #Verify user exists
         if not response.data or len(response.data) == 0:
             return {
                 'success': False,
-                'message': 'Email address and user ID combination does not exist. Contact an admin for more information.'
+                'message': 'Email address and username combination does not exist. Contact an admin for more information.'
             }
         
         #Check if email matches
@@ -32,17 +32,18 @@ def find_user(email: str, userid: int, sb = None):
         if user.get('Email') != email:
             return {
                 'success': False, 
-                'message': 'Email address and user ID combination does not exist. Contact an admin for more information.'
+                'message': 'Email address and username combination does not exist. Contact an admin for more information.'
             }
         return {
             'success': True,
             'message': 'User exists',
+            'user_id': user.get('UserID')  # Return the actual UserID for later use
         }
         
     except Exception as e:
         return {
             'success': False,
-            'message': 'Email address and user ID combination does not exist. Contact an admin for more information.'
+            'message': 'Email address and username combination does not exist. Contact an admin for more information.'
         }
     
     
