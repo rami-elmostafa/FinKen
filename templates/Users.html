@@ -73,6 +73,10 @@
             </select>
             
             <input type="text" id="search-input" placeholder="Search by name or email...">
+            
+            <button type="button" class="btn btn-small btn-secondary" id="check-suspensions-btn">
+                Check Expired Suspensions
+            </button>
         </div>
 
         <!-- Users Table -->
@@ -180,6 +184,31 @@
                 <div class="btn-container">
                     <button type="button" class="btn btn-secondary" id="cancel-edit">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Suspension Modal -->
+    <div id="suspension-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" id="close-suspension-modal">&times;</span>
+            <h2>Suspend User</h2>
+            <form id="suspension-form">
+                <input type="hidden" id="suspension-user-id" name="user_id">
+                <div class="form-group">
+                    <label for="suspension-end-date">Suspension End Date:</label>
+                    <input type="date" id="suspension-end-date" name="suspension_end_date" required>
+                    <small>The user will be automatically unsuspended on this date</small>
+                </div>
+                <div class="form-group">
+                    <label for="suspension-reason">Reason for Suspension:</label>
+                    <textarea id="suspension-reason" name="suspension_reason" rows="4" 
+                              placeholder="Enter the reason for suspension (optional)"></textarea>
+                </div>
+                <div class="btn-container">
+                    <button type="button" class="btn btn-secondary" id="cancel-suspension">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Suspend User</button>
                 </div>
             </form>
         </div>

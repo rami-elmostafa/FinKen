@@ -24,7 +24,8 @@ def get_users_paginated(page=1, per_page=10, search_term='', status_filter='', s
         # Start building the query
         query = sb.table('users').select(
             'UserID, Username, FirstName, LastName, Email, DOB, Address, '
-            'IsActive, IsSuspended, DateCreated, ProfilePictureURL, '
+            'IsActive, IsSuspended, SuspensionEndDate, SuspensionReason, '
+            'DateCreated, ProfilePictureURL, '
             'roles(RoleName)'
         )
         
@@ -106,7 +107,9 @@ def get_users_paginated(page=1, per_page=10, search_term='', status_filter='', s
                     'Status': status,
                     'RoleName': user.get('roles', {}).get('RoleName') if user.get('roles') else 'Unknown',
                     'DateCreated': user.get('DateCreated'),
-                    'ProfilePictureURL': user.get('ProfilePictureURL')
+                    'ProfilePictureURL': user.get('ProfilePictureURL'),
+                    'SuspensionEndDate': user.get('SuspensionEndDate'),
+                    'SuspensionReason': user.get('SuspensionReason')
                 }
                 users.append(user_data)
         
@@ -134,13 +137,14 @@ def get_users_paginated(page=1, per_page=10, search_term='', status_filter='', s
             'message': f'Error fetching users: {str(e)}'
         }
 
-def update_user_status(user_id, action, sb = None):
+def update_user_status(user_id, action, sb = None, suspension_data=None):
     """
     Update user status (activate, deactivate, suspend, unsuspend)
     
     Args:
         user_id (int): The user ID to update
         action (str): Action to perform ('activate', 'deactivate', 'suspend', 'unsuspend')
+        suspension_data (dict): Optional suspension details for suspend action
     
     Returns:
         dict: Success status and message
@@ -153,13 +157,37 @@ def update_user_status(user_id, action, sb = None):
         update_data = {}
         
         if action == 'activate':
-            update_data = {'IsActive': True, 'IsSuspended': False}
+            update_data = {
+                'IsActive': True, 
+                'IsSuspended': False,
+                'SuspensionEndDate': None,
+                'SuspensionReason': None
+            }
         elif action == 'deactivate':
-            update_data = {'IsActive': False, 'IsSuspended': False}
+            update_data = {
+                'IsActive': False, 
+                'IsSuspended': False,
+                'SuspensionEndDate': None,
+                'SuspensionReason': None
+            }
         elif action == 'suspend':
-            update_data = {'IsSuspended': True}
+            if not suspension_data or not suspension_data.get('end_date'):
+                return {
+                    'success': False,
+                    'message': 'Suspension end date is required'
+                }
+            
+            update_data = {
+                'IsSuspended': True,
+                'SuspensionEndDate': suspension_data['end_date'],
+                'SuspensionReason': suspension_data.get('reason', 'No reason provided')
+            }
         elif action == 'unsuspend':
-            update_data = {'IsSuspended': False}
+            update_data = {
+                'IsSuspended': False,
+                'SuspensionEndDate': None,
+                'SuspensionReason': None
+            }
         else:
             return {
                 'success': False,
@@ -203,7 +231,8 @@ def get_user_by_id(user_id, sb = None):
         # Get the user
         response = sb.table('users').select(
             'UserID, Username, FirstName, LastName, Email, DOB, Address, RoleID, '
-            'IsActive, IsSuspended, DateCreated, roles(RoleID, RoleName)'
+            'IsActive, IsSuspended, SuspensionEndDate, SuspensionReason, '
+            'DateCreated, roles(RoleID, RoleName)'
         ).eq('UserID', user_id).execute()
         
         if response.data and len(response.data) > 0:
@@ -228,7 +257,9 @@ def get_user_by_id(user_id, sb = None):
                 'RoleID': user.get('RoleID'),
                 'Status': status,
                 'RoleName': user.get('roles', {}).get('RoleName') if user.get('roles') else 'Unknown',
-                'DateCreated': user.get('DateCreated')
+                'DateCreated': user.get('DateCreated'),
+                'SuspensionEndDate': user.get('SuspensionEndDate'),
+                'SuspensionReason': user.get('SuspensionReason')
             }
             
             return {
@@ -336,4 +367,51 @@ def get_all_roles(sb = None):
         return {
             'success': False,
             'message': f'Error fetching roles: {str(e)}'
+        }
+
+def check_and_unsuspend_users(sb = None):
+    """
+    Check for users whose suspension period has ended and automatically unsuspend them
+    
+    Returns:
+        dict: Contains count of users unsuspended and success status
+    """
+    try:
+        # Initialize Supabase client
+        sb = sb or _sb()
+        
+        # Get current timestamp
+        current_time = datetime.now().isoformat()
+        
+        # Find users who are suspended but their suspension end date has passed
+        response = sb.table('users').select(
+            'UserID, FirstName, LastName, SuspensionEndDate'
+        ).eq('IsSuspended', True).lte('SuspensionEndDate', current_time).execute()
+        
+        unsuspended_count = 0
+        unsuspended_users = []
+        
+        if response.data:
+            for user in response.data:
+                # Unsuspend the user
+                update_result = update_user_status(user['UserID'], 'unsuspend', sb, None)
+                if update_result['success']:
+                    unsuspended_count += 1
+                    unsuspended_users.append({
+                        'UserID': user['UserID'],
+                        'Name': f"{user['FirstName']} {user['LastName']}",
+                        'SuspensionEndDate': user['SuspensionEndDate']
+                    })
+        
+        return {
+            'success': True,
+            'unsuspended_count': unsuspended_count,
+            'unsuspended_users': unsuspended_users,
+            'message': f'Automatically unsuspended {unsuspended_count} users'
+        }
+        
+    except Exception as e:
+        return {
+            'success': False,
+            'message': f'Error checking suspensions: {str(e)}'
         }

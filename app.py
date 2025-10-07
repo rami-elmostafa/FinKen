@@ -13,7 +13,7 @@ from AdminManagement import (
     get_registration_request_details
 )
 from ForgotPassword import *
-from UserManagement import get_users_paginated, update_user_status, get_user_by_id, get_expiring_passwords, get_all_roles
+from UserManagement import get_users_paginated, update_user_status, get_user_by_id, get_expiring_passwords, get_all_roles, check_and_unsuspend_users
 from UpdateUser import update_user
 from EmailUser import send_email
 from SupabaseClient import _sb
@@ -472,7 +472,15 @@ def update_user_status_api(user_id):
     if action not in ['activate', 'deactivate', 'suspend', 'unsuspend']:
         return jsonify({'success': False, 'message': 'Invalid action'}), 400
     
-    result = update_user_status(user_id, action)
+    # Handle suspension data
+    suspension_data = None
+    if action == 'suspend':
+        suspension_data = {
+            'end_date': data.get('suspension_end_date'),
+            'reason': data.get('suspension_reason', 'No reason provided')
+        }
+    
+    result = update_user_status(user_id, action, suspension_data=suspension_data)
     return jsonify(result)
 
 @app.route('/api/send-email', methods=['POST'])
@@ -599,6 +607,15 @@ def update_user_api(user_id):
             'success': False,
             'message': f'Error updating user: {str(e)}'
         }), 500
+
+@app.route('/api/check-suspensions', methods=['POST'])
+def check_suspensions_api():
+    """API endpoint to check and unsuspend users whose suspension period has ended"""
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    result = check_and_unsuspend_users()
+    return jsonify(result)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))
