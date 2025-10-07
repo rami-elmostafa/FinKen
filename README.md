@@ -35,4 +35,4 @@ pip install -r requirements.txt
 flask run
 ```
 
-4. Open http://localhost:8000
+4. Open http://localhost:5000
