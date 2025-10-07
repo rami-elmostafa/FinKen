@@ -20,6 +20,7 @@ CREATE TABLE public.registration_requests (
   Status text NOT NULL DEFAULT 'Pending'::text CHECK ("Status" = ANY (ARRAY['Pending'::character varying::text, 'Approved'::character varying::text, 'Rejected'::character varying::text])),
   ReviewedByUserID integer,
   ReviewDate timestamp with time zone,
+  RejectionReason text,
   CONSTRAINT registration_requests_pkey PRIMARY KEY (RequestID),
   CONSTRAINT fk_reviewed_by_user FOREIGN KEY (ReviewedByUserID) REFERENCES public.users(UserID)
 );
@@ -68,6 +69,7 @@ CREATE TABLE public.users (
   PasswordExpiryDate timestamp with time zone,
   SuspensionEndDate timestamp with time zone,
   DateCreated timestamp with time zone NOT NULL DEFAULT now(),
+  SuspensionReason text,
   CONSTRAINT users_pkey PRIMARY KEY (UserID),
   CONSTRAINT fk_user_role FOREIGN KEY (RoleID) REFERENCES public.roles(RoleID)
 );
