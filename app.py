@@ -151,25 +151,43 @@ def security_question(userid):
     sb = _sb()
 
     if request.method == 'GET':
-        # Get the security question for the user
-        resp = sb.table('user_security_answers').select('QuestionID').eq('UserID', userid).single().execute()
+        try:
+            # Get the security question for the user
+            resp = sb.table('user_security_answers').select('QuestionID').eq('UserID', userid).single().execute()
+            
+            # Error Handling
+            if not resp.data:
+                flash('No security question found for this account. Please contact an administrator for assistance.', 'error')
+                return redirect(url_for('forgot_password'))
+            
+            question_id = resp.data.get('QuestionID')
+            
+            # Get the question text
+            resp = sb.table('security_questions').select('QuestionText').eq('QuestionID', question_id).single().execute()
+            
+            if not resp.data:
+                flash('Security question configuration error. Please contact an administrator for assistance.', 'error')
+                return redirect(url_for('forgot_password'))
 
-        # Error Handling
-        if not resp.data:
-            flash('No security questions found for this account.', 'error')
-            return render_template('SecurityQuestion.html', userid=userid)
-        
-        question_id = resp.data.get('QuestionID')
-        
-        resp = sb.table('security_questions').select('QuestionText').eq('QuestionID', question_id).single().execute()
-
-        question_text = resp.data['QuestionText']
-        return render_template('SecurityQuestion.html', userid=userid, question=question_text)
+            question_text = resp.data['QuestionText']
+            return render_template('SecurityQuestion.html', userid=userid, question=question_text)
+            
+        except Exception as e:
+            # Handle case where user has no security question set up
+            flash('No security question found for this account. Please contact an administrator for assistance.', 'error')
+            return redirect(url_for('forgot_password'))
     
     elif request.method == 'POST':
         # Get form data
         userid = request.form.get('userid')
         answer = request.form.get('answer')
+
+        # Convert userid to int
+        try:
+            userid = int(userid) if userid else None
+        except (ValueError, TypeError):
+            flash('Invalid user ID', 'error')
+            return redirect(url_for('forgot_password'))
 
         # Validate input
         validation_result = security_answer(userid, answer)
@@ -181,7 +199,8 @@ def security_question(userid):
         
         return redirect(url_for('reset_password', userid=userid))
     
-    return render_template('SecurityQuestion.html')
+    # Fallback redirect
+    return redirect(url_for('forgot_password'))
     
 @app.route('/ResetPassword/<int:userid>', methods=['GET', 'POST'])
 def reset_password(userid):

@@ -53,7 +53,6 @@ def security_answer(user_id: int, answer: str, sb = None):
     
     Args:
         user_id (int): The user's ID    
-        question_id (int): The ID of the security question provided by form
         answer (str): The answer to verify
     Returns:
         dict: Response containing status and message
@@ -63,15 +62,15 @@ def security_answer(user_id: int, answer: str, sb = None):
         sb = sb or _sb()
         
         #Query the security_answers table to verify the answer
-        response = sb.table('user_security_answers').select('*').eq('UserID', user_id).single().execute()
+        response = sb.table('user_security_answers').select('*').eq('UserID', user_id).execute()
 
-        if not response.data:
+        if not response.data or len(response.data) == 0:
             return {
                 'success': False,
-                'message': 'No security question found for this user'
+                'message': 'No security question found for this user. Please contact an administrator for assistance.'
             }
 
-        stored_hash = response.data.get('AnswerHash')
+        stored_hash = response.data[0].get('AnswerHash')
         
         if not verify_password(answer, stored_hash):
             return {
@@ -87,7 +86,7 @@ def security_answer(user_id: int, answer: str, sb = None):
     except Exception as e:
         return {
             'success': False,
-            'error': str(e)
+            'message': 'Unable to verify security answer. Please contact an administrator for assistance.'
         }
     
 
