@@ -4,7 +4,7 @@ from FinishSignUp import _password_policy_ok, _now_utc
 
 def find_user(email: str, userid: int, sb = None):
     """
-    Verify if a user exists in the database by email or username.
+    Verify if a user exists in the database by email and username.
     
     Args:
         email (str): The user's email address
@@ -18,20 +18,21 @@ def find_user(email: str, userid: int, sb = None):
         sb = sb or _sb()
         
         #Query users table to match userid and email
-        response = sb.table('users').select('UserID, Email').eq('UserID', userid).single().execute()
+        response = sb.table('users').select('UserID, Email').eq('UserID', userid).execute()
         
         #Verify user exists
-        if not response.data:
+        if not response.data or len(response.data) == 0:
             return {
                 'success': False,
-                'message': 'UserID not found'
+                'message': 'Email address and user ID combination does not exist. Contact an admin for more information.'
             }
+        
         #Check if email matches
-        user = response.data
+        user = response.data[0]  # Get first (and should be only) result
         if user.get('Email') != email:
             return {
                 'success': False, 
-                'message': 'Email does not match userid'
+                'message': 'Email address and user ID combination does not exist. Contact an admin for more information.'
             }
         return {
             'success': True,
@@ -41,8 +42,7 @@ def find_user(email: str, userid: int, sb = None):
     except Exception as e:
         return {
             'success': False,
-            'error': str(e),
-            'message': str(e)
+            'message': 'Email address and user ID combination does not exist. Contact an admin for more information.'
         }
     
     
