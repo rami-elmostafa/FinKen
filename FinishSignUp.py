@@ -97,57 +97,60 @@ def get_signup_context(token: str, sb = None):
     }
 
 def finalize_signup(token: str, password: str, confirm_password: str, question_id: int, answer: str, sb = None):
-    sb = sb or _sb()
-    # Validate token and request
-    ctx = get_signup_context(token)
-    if not ctx.get('success'):
-        return ctx
-    # Validate form
-    if not password or not confirm_password or password != confirm_password:
-        return {'success': False, 'message': 'Passwords do not match'}
-    ok, msg = _password_policy_ok(password)
-    if not ok:
-        return {'success': False, 'message': msg}
-    if not question_id or not answer or not str(answer).strip():
-        return {'success': False, 'message': 'Security question and answer are required'}
-    req = ctx['request']
-    # Build username and hash secrets
-    created_at = _now_utc()
-    username = _generate_username(req['FirstName'], req['LastName'], created_at, sb)
-    pw_hash = hash_password(password)
-    answer_hash = hash_password(answer.strip())
-    # Insert user
-    ins = sb.table('users').insert({
-        'Username': username,
-        'PasswordHash': pw_hash,
-        'FirstName': req['FirstName'],
-        'LastName': req['LastName'],
-        'Email': req['Email'],
-        'DOB': req.get('DOB'),
-        'Address': req.get('Address') or '',
-        'RoleID': 3,  # default accountant
-        'IsActive': True,
-        'IsSuspended': False,
-        'FailedLoginAttempts': 0,
-        'DateCreated': created_at.isoformat()
-    }).execute()
-    if not ins.data:
-        return {'success': False, 'message': 'Could not create user account'}
-    user_id = ins.data[0]['UserID']
-    # Password history
-    sb.table('password_history').insert({
-        'UserID': user_id,
-        'PasswordHash': pw_hash,
-        'DateSet': created_at.isoformat()
-    }).execute()
-    # Security answer
-    sb.table('user_security_answers').insert({
-        'UserID': user_id,
-        'QuestionID': int(question_id),
-        'AnswerHash': answer_hash
-    }).execute()
-    # Mark invitation used
-    sb.table('signup_invitations').update({
-        'UsedAt': 'now()'
-    }).eq('Token', token).execute()
-    return {'success': True, 'message': 'Account created successfully', 'username': username, 'user_id': user_id}
+    try:
+        sb = sb or _sb()
+        # Validate token and request
+        ctx = get_signup_context(token)
+        if not ctx.get('success'):
+            return ctx
+        # Validate form
+        if not password or not confirm_password or password != confirm_password:
+            return {'success': False, 'message': 'Passwords do not match'}
+        ok, msg = _password_policy_ok(password)
+        if not ok:
+            return {'success': False, 'message': msg}
+        if not question_id or not answer or not str(answer).strip():
+            return {'success': False, 'message': 'Security question and answer are required'}
+        req = ctx['request']
+        # Build username and hash secrets
+        created_at = _now_utc()
+        username = _generate_username(req['FirstName'], req['LastName'], created_at, sb)
+        pw_hash = hash_password(password)
+        answer_hash = hash_password(answer.strip())
+        # Insert user
+        ins = sb.table('users').insert({
+            'Username': username,
+            'PasswordHash': pw_hash,
+            'FirstName': req['FirstName'],
+            'LastName': req['LastName'],
+            'Email': req['Email'],
+            'DOB': req.get('DOB'),
+            'Address': req.get('Address') or '',
+            'RoleID': 3,  # default accountant
+            'IsActive': True,
+            'IsSuspended': False,
+            'FailedLoginAttempts': 0,
+            'DateCreated': created_at.isoformat()
+        }).execute()
+        if not ins.data:
+            return {'success': False, 'message': 'Could not create user account'}
+        user_id = ins.data[0]['UserID']
+        # Password history
+        sb.table('password_history').insert({
+            'UserID': user_id,
+            'PasswordHash': pw_hash,
+            'DateSet': created_at.isoformat()
+        }).execute()
+        # Security answer
+        sb.table('user_security_answers').insert({
+            'UserID': user_id,
+            'QuestionID': int(question_id),
+            'AnswerHash': answer_hash
+        }).execute()
+        # Mark invitation used
+        sb.table('signup_invitations').update({
+            'UsedAt': 'now()'
+        }).eq('Token', token).execute()
+        return {'success': True, 'message': 'Account created successfully', 'username': username, 'user_id': user_id}
+    except Exception as e:
+        return {'success': False, 'message': f'Error finalizing signup: {str(e)}'}

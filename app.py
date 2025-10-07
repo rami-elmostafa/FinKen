@@ -12,9 +12,11 @@ from AdminManagement import (
     reject_registration_request,
     get_registration_request_details
 )
+from ForgotPassword import *
 from UserManagement import get_users_paginated, update_user_status, get_user_by_id, get_expiring_passwords, get_all_roles
 from UpdateUser import update_user
 from EmailUser import send_email
+from SupabaseClient import _sb
 
 # Load environment variables from ..env file
 load_dotenv()
@@ -118,9 +120,85 @@ def create_new_user_route():
             flash(f'Registration failed: {result["message"]}', 'error')
             return render_template('CreateNewUser.html')
 
-@app.route("/ForgotPassword")
+@app.route('/ForgotPassword', methods=['GET', 'POST'])
 def forgot_password():
-    return render_template('ForgotPassword.html')
+    if request.method == 'GET':
+        return render_template('ForgotPassword.html')
+    
+    elif request.method == 'POST':
+        # Get form data
+        email = request.form.get('email')
+        userid = request.form.get('userid')
+
+        # Validate input
+        validation_result = find_user(email, userid)
+
+        if not validation_result['success']:
+            flash(f'Error: {validation_result["message"]}', 'error')
+            return render_template('ForgotPassword.html')
+        
+        # User found, route to security question
+        return redirect(url_for('security_question', userid=userid))
+
+@app.route('/SecurityQuestion/<int:userid>', methods=['GET', 'POST'])
+def security_question(userid):
+    sb = _sb()
+
+    if request.method == 'GET':
+        # Get the security question for the user
+        resp = sb.table('user_security_answers').select('QuestionID').eq('UserID', userid).single().execute()
+
+        # Error Handling
+        if not resp.data:
+            flash('No security questions found for this account.', 'error')
+            return render_template('SecurityQuestion.html', userid=userid)
+        
+        question_id = resp.data.get('QuestionID')
+        
+        resp = sb.table('security_questions').select('QuestionText').eq('QuestionID', question_id).single().execute()
+
+        question_text = resp.data['QuestionText']
+        return render_template('SecurityQuestion.html', userid=userid, question=question_text)
+    
+    elif request.method == 'POST':
+        # Get form data
+        userid = request.form.get('userid')
+        answer = request.form.get('answer')
+
+        # Validate input
+        validation_result = security_answer(userid, answer)
+                
+        if not validation_result.get('success'):
+            msg = validation_result.get("message") or validation_result.get("error") or "Unknown error"
+            flash(f"Error: {msg}", "error")
+            return redirect(url_for("security_question", userid=userid))
+        
+        return redirect(url_for('reset_password', userid=userid))
+    
+    return render_template('SecurityQuestion.html')
+    
+@app.route('/ResetPassword/<int:userid>', methods=['GET', 'POST'])
+def reset_password(userid):
+    if request.method == 'GET':
+        return render_template("ResetPassword.html", userid=userid)
+
+    password = request.form.get('password')
+    confirm = request.form.get('confirm')
+
+    
+    if password != confirm:
+        flash('Passwords do not match.', 'error')
+        return redirect(url_for('reset_password', userid=userid))
+    
+    response = change_password(userid=userid, new_password=password)
+
+    if not response['success']:
+        msg = response.get("message") or response.get("error") or "Unknown error"
+        flash(f'Error: {msg}', 'error')
+        return redirect(url_for('reset_password', userid=userid))
+
+    return render_template('index.html')
+
 
 @app.route('/SignOut')
 def sign_out():
