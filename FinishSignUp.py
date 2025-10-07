@@ -6,6 +6,9 @@ from passwordHash import hash_password
 from EmailUser import send_email
 from SupabaseClient import _sb
 
+# Password expiry configuration
+PASSWORD_EXPIRY_DAYS = 30
+
 def _now_utc():
     return datetime.now(timezone.utc)
 
@@ -113,6 +116,7 @@ def finalize_signup(token: str, password: str, confirm_password: str, question_i
     req = ctx['request']
     # Build username and hash secrets
     created_at = _now_utc()
+    password_expiry_date = created_at + timedelta(days=PASSWORD_EXPIRY_DAYS)
     username = _generate_username(req['FirstName'], req['LastName'], created_at, sb)
     pw_hash = hash_password(password)
     answer_hash = hash_password(answer.strip())
@@ -129,6 +133,7 @@ def finalize_signup(token: str, password: str, confirm_password: str, question_i
         'IsActive': True,
         'IsSuspended': False,
         'FailedLoginAttempts': 0,
+        'PasswordExpiryDate': password_expiry_date.isoformat(),
         'DateCreated': created_at.isoformat()
     }).execute()
     if not ins.data:
