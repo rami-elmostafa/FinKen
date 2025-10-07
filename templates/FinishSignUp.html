@@ -110,82 +110,8 @@
         </div>
     </div>
 
+    <script src="{{ url_for('static', filename='passwordCheck.js') }}"></script>
     <script>
-        // Password validation and real-time feedback
-        function validatePassword(password) {
-            const errors = [];
-            
-            if (password.length < 8) {
-                errors.push("Password must be at least 8 characters long");
-            }
-            
-            if (password.length > 0 && !password[0].match(/[a-zA-Z]/)) {
-                errors.push("Password must start with a letter");
-            }
-            
-            if (!/[a-zA-Z]/.test(password)) {
-                errors.push("Password must contain at least one letter");
-            }
-            
-            if (!/[0-9]/.test(password)) {
-                errors.push("Password must contain at least one number");
-            }
-            
-            if (!/[^a-zA-Z0-9]/.test(password)) {
-                errors.push("Password must contain at least one special character");
-            }
-            
-            return {
-                valid: errors.length === 0,
-                errors: errors
-            };
-        }
-
-        // Real-time password validation
-        document.getElementById('password').addEventListener('input', function() {
-            const password = this.value;
-            const requirements = document.querySelector('.password-requirements');
-            
-            if (password.length === 0) {
-                requirements.style.color = '#666';
-                requirements.textContent = 'Password must be at least 8 characters, start with a letter, and include a letter, number, and special character';
-                return;
-            }
-            
-            const validation = validatePassword(password);
-            
-            if (validation.valid) {
-                requirements.style.color = 'green';
-                requirements.textContent = '✓ Password meets all requirements';
-            } else {
-                requirements.style.color = 'red';
-                requirements.textContent = validation.errors.join('. ');
-            }
-        });
-
-        // Password confirmation validation
-        function checkPasswordMatch() {
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm_password').value;
-            const messageDiv = document.getElementById('password-match-message');
-            
-            if (confirmPassword.length === 0) {
-                messageDiv.textContent = '';
-                return;
-            }
-            
-            if (password === confirmPassword) {
-                messageDiv.style.color = 'green';
-                messageDiv.textContent = '✓ Passwords match';
-            } else {
-                messageDiv.style.color = 'red';
-                messageDiv.textContent = '✗ Passwords do not match';
-            }
-        }
-
-        document.getElementById('confirm_password').addEventListener('input', checkPasswordMatch);
-        document.getElementById('password').addEventListener('input', checkPasswordMatch);
-
         // Profile picture preview
         document.getElementById('profile_picture').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -220,46 +146,6 @@
             } else {
                 preview.style.display = 'none';
             }
-        });
-
-        // Form submission validation
-        document.getElementById('finish-signup-form').addEventListener('submit', function(e) {
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm_password').value;
-            const securityQuestion = document.getElementById('security_question').value;
-            const securityAnswer = document.getElementById('security_answer').value.trim();
-            
-            // Validate password
-            const validation = validatePassword(password);
-            if (!validation.valid) {
-                alert('Password does not meet requirements:\n' + validation.errors.join('\n'));
-                e.preventDefault();
-                return;
-            }
-            
-            // Check password match
-            if (password !== confirmPassword) {
-                alert('Passwords do not match');
-                e.preventDefault();
-                return;
-            }
-            
-            // Check security question and answer
-            if (!securityQuestion) {
-                alert('Please select a security question');
-                e.preventDefault();
-                return;
-            }
-            
-            if (!securityAnswer) {
-                alert('Please provide an answer to your security question');
-                e.preventDefault();
-                return;
-            }
-            
-            // Disable submit button to prevent double submission
-            document.getElementById('submit-btn').disabled = true;
-            document.getElementById('submit-btn').textContent = 'Creating Account...';
         });
     </script>
 </body>
