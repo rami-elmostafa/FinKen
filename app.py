@@ -15,7 +15,7 @@ from AdminManagement import (
 from ForgotPassword import *
 from UserManagement import get_users_paginated, update_user_status, get_user_by_id, get_expiring_passwords, get_all_roles, check_and_unsuspend_users
 from UpdateUser import update_user
-from EmailUser import send_email
+from EmailUser import send_email, send_password_expiry_notifications
 from SupabaseClient import _sb
 
 # Load environment variables from ..env file
@@ -623,6 +623,48 @@ def check_suspensions_api():
     
     result = check_and_unsuspend_users()
     return jsonify(result)
+
+@app.route('/api/send-password-expiry-notifications', methods=['POST'])
+def send_password_expiry_notifications_api():
+    """API endpoint to send password expiry notifications to users whose passwords expire within 3 days"""
+    # This endpoint can be called by cron jobs or administrators
+    # For cron jobs, we'll allow access without session authentication
+    # For manual triggers, require admin authentication
+    
+    # Check if this is a manual trigger (has session) vs automated (no session)
+    if 'user_id' in session:
+        # Manual trigger - require admin privileges
+        if session.get('user_role') != 'administrator':
+            return jsonify({
+                'success': False,
+                'error': 'Access denied. Administrator privileges required.'
+            }), 403
+    
+    # Send the notifications
+    result = send_password_expiry_notifications()
+    return jsonify(result)
+
+@app.route('/cron/password-expiry-check')
+def cron_password_expiry_check():
+    """
+    Cron job endpoint for password expiry notifications
+    This endpoint is designed to be called by automated systems/cron jobs
+    """
+    try:
+        result = send_password_expiry_notifications()
+        
+        # Return appropriate HTTP status codes for monitoring
+        if result.get('success'):
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 500
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Cron job failed: {str(e)}',
+            'users_notified': 0
+        }), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))
