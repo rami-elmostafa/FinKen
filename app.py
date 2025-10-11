@@ -18,11 +18,31 @@ from UpdateUser import update_user
 from EmailUser import send_email, send_password_expiry_notifications
 from SupabaseClient import _sb
 
+# Import the audit context functions
+try:
+    from SupabaseClient import set_current_user
+    AUDIT_AVAILABLE = True
+except ImportError:
+    AUDIT_AVAILABLE = False
+    set_current_user = lambda x: None  # No-op function
+
 # Load environment variables from ..env file
 load_dotenv()
 
 app = Flask(__name__, static_folder='frontend')
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here')  # For flash messages
+
+from functools import wraps
+
+def set_user_context(f):
+    """Decorator to set user context for audit logging"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Set user context if available
+        if 'user_id' in session:
+            set_current_user(session['user_id'])
+        return f(*args, **kwargs)
+    return decorated_function
 
 def get_user_context():
     """Helper function to get user context for templates"""
@@ -51,6 +71,7 @@ def profile_image(filename):
         return send_from_directory('profile_images', 'default_profile.webp')
 
 @app.route('/', methods=['GET', 'POST'])
+@set_user_context
 def index():
     if request.method == 'GET':
         return render_template('index.html')
@@ -87,6 +108,7 @@ def index():
             return render_template('index.html')
 
 @app.route('/CreateNewUser', methods=['GET', 'POST'])
+@set_user_context
 def create_new_user_route():
     if request.method == 'GET':
         return render_template('CreateNewUser.html')
@@ -121,6 +143,7 @@ def create_new_user_route():
             return render_template('CreateNewUser.html')
 
 @app.route('/ForgotPassword', methods=['GET', 'POST'])
+@set_user_context
 def forgot_password():
     if request.method == 'GET':
         return render_template('ForgotPassword.html')
@@ -147,6 +170,7 @@ def forgot_password():
         return redirect(url_for('security_question', userid=user_id))
 
 @app.route('/SecurityQuestion/<int:userid>', methods=['GET', 'POST'])
+@set_user_context
 def security_question(userid):
     sb = _sb()
 
@@ -203,6 +227,7 @@ def security_question(userid):
     return redirect(url_for('forgot_password'))
     
 @app.route('/ResetPassword/<int:userid>', methods=['GET', 'POST'])
+@set_user_context
 def reset_password(userid):
     if request.method == 'GET':
         return render_template("ResetPassword.html", userid=userid)
@@ -247,6 +272,7 @@ def admin_dashboard():
                          pending_requests=pending_requests.get('requests', []))
 
 @app.route('/ManageRegistrations')
+@set_user_context
 def manage_registrations():
     if 'user_id' not in session or session.get('user_role') != 'administrator':
         flash('Access denied. Administrator privileges required.', 'error')
@@ -274,6 +300,7 @@ def manage_registrations():
                          **user_context)
 
 @app.route('/ApproveRegistration/<int:request_id>', methods=['POST'])
+@set_user_context
 def approve_registration(request_id):
     if 'user_id' not in session or session.get('user_role') != 'administrator':
         flash('Access denied. Administrator privileges required.', 'error')
@@ -292,6 +319,7 @@ def approve_registration(request_id):
     return redirect(url_for('manage_registrations'))
 
 @app.route('/RejectRegistration/<int:request_id>', methods=['POST'])
+@set_user_context
 def reject_registration(request_id):
     if 'user_id' not in session or session.get('user_role') != 'administrator':
         flash('Access denied. Administrator privileges required.', 'error')
@@ -325,6 +353,7 @@ def accountant_dashboard():
     return f"Accountant Dashboard - Welcome {session.get('user_name')}"
 
 @app.route('/FinishSignUp', methods=['GET', 'POST'])
+@set_user_context
 def finish_sign_up():
     if request.method == 'GET':
         token = request.args.get('token')
@@ -408,6 +437,7 @@ def finish_sign_up():
         
         
 @app.route("/Home")
+@set_user_context
 def home():
     if 'user_id' not in session:
         flash('Please sign in to access this page.', 'error')
@@ -416,6 +446,7 @@ def home():
     user_context = get_user_context()
     return render_template('Home.html', **user_context)
 @app.route("/Users")
+@set_user_context
 def users():
     if 'user_id' not in session or session.get('user_role') != 'administrator':
         flash('Access denied. Administrator privileges required.', 'error')
@@ -425,6 +456,7 @@ def users():
     return render_template('Users.html', **user_context)
 
 @app.route('/ExpiringPasswords')
+@set_user_context
 def expiring_passwords():
     if 'user_id' not in session or session.get('user_role') != 'administrator':
         flash('Access denied. Administrator privileges required.', 'error')
@@ -447,6 +479,7 @@ def expiring_passwords():
                          **user_context)
 
 @app.route('/api/users')
+@set_user_context
 def api_users():
     """API endpoint to get paginated users data"""
     if 'user_id' not in session or session.get('user_role') != 'administrator':
@@ -468,6 +501,7 @@ def api_users():
     return jsonify(result)
 
 @app.route('/api/users/<int:user_id>/status', methods=['POST'])
+@set_user_context
 def update_user_status_api(user_id):
     """API endpoint to update user status"""
     if 'user_id' not in session or session.get('user_role') != 'administrator':
@@ -491,6 +525,7 @@ def update_user_status_api(user_id):
     return jsonify(result)
 
 @app.route('/api/send-email', methods=['POST'])
+@set_user_context
 def send_email_api():
     """API endpoint to send email to users"""
     if 'user_id' not in session or session.get('user_role') != 'administrator':
@@ -531,6 +566,7 @@ def send_email_api():
         }), 500
 
 @app.route('/api/users/<int:user_id>', methods=['GET'])
+@set_user_context
 def get_user_details_api(user_id):
     """API endpoint to get detailed user information for editing"""
     if 'user_id' not in session or session.get('user_role') != 'administrator':
@@ -540,6 +576,7 @@ def get_user_details_api(user_id):
     return jsonify(result)
 
 @app.route('/api/roles', methods=['GET'])
+@set_user_context
 def get_roles_api():
     """API endpoint to get all available roles"""
     if 'user_id' not in session or session.get('user_role') != 'administrator':
@@ -549,6 +586,7 @@ def get_roles_api():
     return jsonify(result)
 
 @app.route('/api/users/<int:user_id>', methods=['PUT'])
+@set_user_context
 def update_user_api(user_id):
     """API endpoint to update user information"""
     if 'user_id' not in session or session.get('user_role') != 'administrator':
@@ -616,6 +654,7 @@ def update_user_api(user_id):
         }), 500
 
 @app.route('/api/check-suspensions', methods=['POST'])
+@set_user_context
 def check_suspensions_api():
     """API endpoint to check and unsuspend users whose suspension period has ended"""
     if 'user_id' not in session or session.get('user_role') != 'administrator':
@@ -625,6 +664,7 @@ def check_suspensions_api():
     return jsonify(result)
 
 @app.route('/api/send-password-expiry-notifications', methods=['POST'])
+@set_user_context
 def send_password_expiry_notifications_api():
     """API endpoint to send password expiry notifications to users whose passwords expire within 3 days"""
     # This endpoint can be called by cron jobs or administrators
