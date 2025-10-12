@@ -343,19 +343,28 @@ def api_get_account(account_id):
 @app.route('/api/accounts', methods=['POST'])
 @set_user_context
 def api_create_account():
-    if 'user_id' not in session or session.get('user_role') != 'administrator':
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    # Allow administrators and accountants to create accounts
+    role = session.get('user_role', '').lower()
+    if role not in ('administrator', 'admin', 'accountant'):
         return jsonify({'success': False, 'message': 'Access denied'}), 403
     data = request.get_json() or {}
     # attach user id from session
     data['UserID'] = session.get('user_id')
+    print(f"[api_create_account] incoming data: {data}")
     result = add_account(data)
+    print(f"[api_create_account] result: {result}")
     return jsonify(result)
 
 
 @app.route('/api/accounts/<int:account_id>', methods=['PUT'])
 @set_user_context
 def api_update_account(account_id):
-    if 'user_id' not in session or session.get('user_role') != 'administrator':
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    # Only administrators may update account definitions
+    if session.get('user_role', '').lower() not in ('administrator', 'admin'):
         return jsonify({'success': False, 'message': 'Access denied'}), 403
     data = request.get_json() or {}
     result = update_account(account_id, data)
@@ -365,7 +374,10 @@ def api_update_account(account_id):
 @app.route('/api/accounts/<int:account_id>/deactivate', methods=['POST'])
 @set_user_context
 def api_deactivate_account(account_id):
-    if 'user_id' not in session or session.get('user_role') != 'administrator':
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    # Only administrators may deactivate accounts
+    if session.get('user_role', '').lower() not in ('administrator', 'admin'):
         return jsonify({'success': False, 'message': 'Access denied'}), 403
     result = deactivate_account(account_id)
     return jsonify(result)

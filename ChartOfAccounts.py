@@ -127,7 +127,10 @@ def add_account(account: dict, sb=None):
         return {'success': True, 'account': row, 'account_id': account_id}
 
     except Exception as e:
-        return {'success': False, 'message': str(e)}
+        import traceback
+        tb = traceback.format_exc()
+        # return error with traceback for debugging (developer only)
+        return {'success': False, 'message': str(e), 'traceback': tb}
 
 def get_account_by_id(account_id, sb=None):
     try:

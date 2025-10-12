@@ -1,51 +1,214 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chart of Accounts</title>
-  <link rel="stylesheet" href="/styles.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+        
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background-color: #f5f5f5;
+      padding: 20px;
+    }
+        
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+        
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+        
+    h1 {
+      color: #FFC900;
+      font-size: 32px;
+      font-weight: 300;
+    }
+        
+    .add-btn {
+      background-color:  #000000;
+      color: white;
+      border: none;
+      padding: 6px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+        
+    .add-btn:hover {
+      background-color: #000000;
+    }
+        
+    .search-box {
+      display: flex;
+      gap: 10px;
+    }
+        
+    .search-input {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      width: 200px;
+      font-size: 14px;
+    }
+        
+    .search-btn {
+      background-color: #000000;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+        
+    .search-btn:hover {
+      background-color: #000000;
+    }
+        
+    table {
+      width: 100%;
+      background-color: white;
+      border-collapse: collapse;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      table-layout: fixed;
+    }
+        
+    th {
+      background-color: #f8f9fa;
+      color: #666;
+      font-weight: 500;
+      text-align: left;
+      padding: 12px;
+      border-bottom: 2px solid #e0e0e0;
+      font-size: 13px;
+    }
+        
+    th.sortable {
+      cursor: pointer;
+      position: relative;
+      padding-right: 25px;
+    }
+        
+    th.sortable::after {
+      content: '▲';
+      position: absolute;
+      right: 8px;
+      font-size: 10px;
+      color: #999;
+    }
+        
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #e8e8e8;
+      font-size: 14px;
+      color: #333;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+        
+    tr:hover {
+      background-color: #f9f9f9;
+    }
+        
+    .account-number {
+      color: #4a9eff;
+      cursor: pointer;
+    }
+        
+    .account-number:hover {
+      text-decoration: underline;
+    }
+        
+    .edit-btn {
+      background-color: #4a9eff;
+      color: white;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+        
+    .edit-btn:hover {
+      background-color: #3d8ce6;
+    }
+
+    /* col widths to match previous layout */
+    .col-number { width: 8%; }
+    .col-name { width: 46%; }
+    .col-type { width: 8%; }
+    .col-term { width: 6%; }
+    .col-balance { width: 9%; }
+    .col-createdby { width: 7%; }
+    .col-date { width: 6%; }
+    .col-comments { width: 6%; }
+    .col-actions { width: 6%; }
+  </style>
 </head>
 <body>
-  <header class="topbar">
-    <img src="/images/finkenlogo.png" alt="logo" class="logo">
-    <div class="user-info">Logged in: {{ user_name }}</div>
-    <nav class="top-nav">
-      <a href="/">Home</a>
-      <a href="/ChartOfAccounts">Chart of Accounts</a>
-      <a href="/ManageRegistrations">Manage Registrations</a>
-      <a href="/AdminDashboard">Admin</a>
-    </nav>
-  </header>
+  <div class="header">
+    <div class="header-left">
+      <h1>Chart of Accounts</h1>
+      <!-- keep the id the JS expects -->
+      <button id="newAccountBtn" class="add-btn">+ Add</button>
+    </div>
+    <div class="search-box">
+      <!-- keep the ids for JS wiring -->
+      <input id="search" class="search-input" placeholder="Search">
+      <button id="searchBtn" class="search-btn">Search</button>
+    </div>
+  </div>
+    
+  <table id="accountsTable">
+    <colgroup>
+      <col class="col-number" />
+      <col class="col-name" />
+      <col class="col-type" />
+      <col class="col-term" />
+      <col class="col-balance" />
+      <col class="col-createdby" />
+      <col class="col-date" />
+      <col class="col-comments" />
+      <col class="col-actions" />
+    </colgroup>
+    <thead>
+      <tr>
+        <th class="sortable col-number">Account<br>Number</th>
+        <th class="sortable col-name">Name</th>
+        <th class="col-type">Type</th>
+        <th class="col-term">Term</th>
+        <th class="col-balance">Balance</th>
+        <th class="col-createdby">Created By</th>
+        <th class="col-date">Date<br>Created</th>
+        <th class="col-comments">Comments</th>
+        <th class="col-actions"> </th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-  <main class="container">
-    <section class="controls">
-      <input id="search" placeholder="Search by name or number" />
-      <select id="category"><option value="">All categories</option></select>
-      <button id="searchBtn" title="Search accounts">Search</button>
-      <button id="newAccountBtn" title="Add new account">Add Account</button>
-    </section>
+  <div class="pagination" id="accountsPagination" style="margin-top:12px; display:flex; gap:8px; align-items:center">
+    <button id="prevPage" class="btn">Previous</button>
+    <span id="paginationInfo"></span>
+    <button id="nextPage" class="btn">Next</button>
+  </div>
 
-    <section>
-      <table id="accountsTable" class="data-table">
-        <thead>
-          <tr>
-            <th>Number</th>
-            <th>Name</th>
-            <th>Category</th>
-            <th>Subcategory</th>
-            <th>Balance</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
-  </main>
-
-  <!-- Add/Edit modal -->
-  <div id="accountModal" class="modal" aria-hidden="true">
-    <div class="modal-content">
+  <!-- Add/Edit modal (preserve existing form IDs) -->
+  <div id="accountModal" class="modal" aria-hidden="true" style="display:none">
+    <div class="modal-content" style="background:#fff;padding:16px;border-radius:6px;max-width:600px;margin:24px auto;box-shadow:0 6px 24px rgba(0,0,0,0.12)">
       <h2 id="modalTitle">Add Account</h2>
       <form id="accountForm">
         <label>Account Number <input name="AccountNumber" required pattern="\d+" title="Digits only, leading zeros allowed"></label>
@@ -60,9 +223,9 @@
         <label>Statement <select name="Statement"><option value="BS">BS</option><option value="IS">IS</option><option value="RE">RE</option></select></label>
         <label>Order <input name="Order"></label>
         <label>Comment <input name="Comment"></label>
-        <div class="modal-actions">
-          <button type="submit">Save</button>
-          <button type="button" id="cancelModal">Cancel</button>
+        <div class="modal-actions" style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+          <button type="submit" class="add-btn">Save</button>
+          <button type="button" id="cancelModal" class="btn">Cancel</button>
         </div>
       </form>
     </div>

@@ -642,6 +642,11 @@ body {
     z-index: 10001;
 }
 
+/* When the navbar has the 'open' class it will slide into view */
+.navbar.open {
+    left: 0 !important;
+}
+
 .nav-list {
     list-style: none;
     padding: 0;
@@ -716,6 +721,45 @@ body {
     font-weight: 600;
     padding: 15px;
 }
+
+/* Chart of Accounts specific styles */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+}
+.page-header h1 {
+    margin: 0;
+    color: #0b6ea8; /* keep contrast with project colors */
+}
+.page-header .header-left { display:flex; gap:12px; align-items:center }
+.btn.add-btn { background-color: #0b6ea8; color: white; border-radius: 6px; padding: 8px 12px; border: none }
+.page-header .header-right { display:flex; gap:8px; align-items:center }
+.page-header input { padding:8px; border-radius:6px; border:1px solid #ccc }
+
+.table-section { padding: 0 20px 40px 20px }
+.data-table { width: 100%; border-collapse: collapse; margin-top: 10px }
+.data-table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed }
+.data-table thead th { text-align:left; padding:10px; border-bottom: 2px solid #eee; background: transparent }
+.data-table thead th, .data-table td { overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
+.data-table tbody td { vertical-align: middle }
+.data-table .col-name { white-space: nowrap; text-overflow: ellipsis; overflow: hidden }
+.data-table .col-name a { display:inline-block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.data-table .col-name a[title] { cursor: help }
+.data-table .col-comments { white-space: nowrap; text-overflow: ellipsis; overflow: hidden }
+.data-table tbody tr { border-bottom: 1px solid #f0f0f0 }
+.data-table tbody tr:hover { background: #fafafa }
+.data-table td { padding: 12px; vertical-align: middle }
+.data-table .col-number a { color: #0b6ea8; text-decoration: none }
+.data-table .col-actions button { background:#0b6ea8; color:white; border:none; padding:6px 10px; border-radius:6px }
+
+.data-table .col-balance { text-align:right }
+.data-table .col-actions { text-align:center }
+
+.pagination { display:flex; gap:10px; align-items:center; justify-content:center; padding:12px 0 }
+.pagination .btn { padding:6px 10px; border-radius:6px; background:#0b6ea8; color:#fff; border:none }
+.pagination #paginationInfo { font-weight:600 }
 
 /* Search and Filter Styles */
 .search-filter {
