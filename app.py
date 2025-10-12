@@ -17,6 +17,9 @@ from UserManagement import get_users_paginated, update_user_status, get_user_by_
 from UpdateUser import update_user
 from EmailUser import send_email, send_password_expiry_notifications
 from SupabaseClient import _sb
+from ChartOfAccounts import (
+    add_account, get_account_by_id, update_account, deactivate_account, list_accounts, get_ledger_entries
+)
 
 # Import the audit context functions
 try:
@@ -298,6 +301,86 @@ def manage_registrations():
                          current_search=search_term,
                          current_status=status_filter,
                          **user_context)
+
+
+@app.route('/ChartOfAccounts')
+@set_user_context
+def chart_of_accounts_page():
+    if 'user_id' not in session:
+        flash('Please sign in to access this page.', 'error')
+        return redirect(url_for('index'))
+    user_context = get_user_context()
+    return render_template('ChartOfAccounts.html', **user_context)
+
+
+@app.route('/api/accounts')
+@set_user_context
+def api_list_accounts():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 50, type=int)
+    search = request.args.get('search', '', type=str)
+    # basic filters
+    filters = {
+        'category': request.args.get('category'),
+        'subcategory': request.args.get('subcategory'),
+        'is_active': None if request.args.get('is_active') is None else (request.args.get('is_active').lower() == 'true')
+    }
+    result = list_accounts(page=page, per_page=per_page, search_term=search, filters=filters)
+    return jsonify(result)
+
+
+@app.route('/api/accounts/<int:account_id>')
+@set_user_context
+def api_get_account(account_id):
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    result = get_account_by_id(account_id)
+    return jsonify(result)
+
+
+@app.route('/api/accounts', methods=['POST'])
+@set_user_context
+def api_create_account():
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    data = request.get_json() or {}
+    # attach user id from session
+    data['UserID'] = session.get('user_id')
+    result = add_account(data)
+    return jsonify(result)
+
+
+@app.route('/api/accounts/<int:account_id>', methods=['PUT'])
+@set_user_context
+def api_update_account(account_id):
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    data = request.get_json() or {}
+    result = update_account(account_id, data)
+    return jsonify(result)
+
+
+@app.route('/api/accounts/<int:account_id>/deactivate', methods=['POST'])
+@set_user_context
+def api_deactivate_account(account_id):
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    result = deactivate_account(account_id)
+    return jsonify(result)
+
+
+@app.route('/ledger/<account_number>')
+@set_user_context
+def ledger_placeholder(account_number):
+    # Placeholder ledger page for an account
+    if 'user_id' not in session:
+        flash('Please sign in to access this page.', 'error')
+        return redirect(url_for('index'))
+    user_context = get_user_context()
+    entries = get_ledger_entries(account_number)
+    return render_template('Ledger.html', account_number=account_number, entries=entries, **user_context)
 
 @app.route('/ApproveRegistration/<int:request_id>', methods=['POST'])
 @set_user_context
