@@ -17,7 +17,9 @@
 - **Database:** PostgreSQL  
 - **Deployment:** Cloud Service  
 
-## Local Development
+## Local Development 
+
+MacOS
 
 1. Create and activate virtual environment:
 ```bash
@@ -36,3 +38,20 @@ flask run
 ```
 
 4. Open http://localhost:5000
+
+Windows
+1. Create and activate virtual environment:
+```powershell
+python -m venv venv
+venv/Scripts/Activate
+```
+
+2. Install dependencies:
+```powershell
+pip install -r requirements.txt
+```
+
+3. Run the app:
+```powershell
+app.py
+```
