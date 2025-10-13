@@ -1,0 +1,168 @@
+AI plan to revamp the existing website into a React + Tailwind CSS app (file-by-file), using Material React Table V3 for all tables.
+Keep in mind this is a Flask Application, running on Render
+This is a Finance Application. 
+
+0) Guiding principles
+- Convert one HTML file at a time; maintain visual parity and functional parity before moving on.
+- For any tabular data, use Material React Table V3 (MRT v3) instead of native <table>.
+- Keep components small, typed (JS), accessible, and test-covered.
+- After each file conversion, create a check-in PR and wait for approval before proceeding.
+
+1) Project bootstrap (one-time)
+- Initialize app with Vite + React + JS.
+- Add Tailwind CSS, PostCSS, Autoprefixer, and configure tailwind.config.js (content globs to src/**/*.{ts,tsx,html}).
+- Install table stack:
+  - material-react-table@^3
+  - @mui/material @mui/icons-material @emotion/react @emotion/styled
+  - @tanstack/react-table
+- Install routing and forms:
+  - react-router-dom
+  - react-hook-form zod @hookform/resolvers
+- Install quality tooling:
+  - eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-plugin-react eslint-plugin-react-hooks
+  - prettier eslint-config-prettier
+  - vitest @testing-library/react @testing-library/jest-dom jsdom
+  - husky lint-staged (pre-commit: lint, typecheck, test)
+- Add base app shell:
+  - src/main.tsx mounts <App/>.
+  - src/App.tsx defines Router and shared layout (header/nav/footer) styled with Tailwind.
+  - src/styles.css imports Tailwind base/components/utilities.
+  - Add a global CSS reset via Tailwind preflight (default).
+- Define design tokens in tailwind.config.js (colors, spacing, typography) to standardize the look and feel.
+
+2) Inventory and prioritization (one-time)
+- Crawl the current site and list all HTML files, associated CSS/JS, and assets.
+- Prioritize by:
+  1) Entry points (landing/home), 2) Top nav-linked pages, 3) High-traffic or critical workflows, 4) Remaining content pages.
+- Produce a migration order list (e.g., index.html -> Home.html -> ForgotPassword.html ->CreateNewUser.html -> etc.).
+
+3) Shared foundations (one-time)
+- Build shared UI primitives:
+  - Layout: <AppLayout> with responsive header/sidebar/footer, logo area, user menu.
+  - Typography components for headings/body using Tailwind utilities.
+  - Buttons, Inputs, Selects, Textareas, Modal/Drawer, Toast notifications.
+  - Form primitives wired to react-hook-form.
+  - Reusable <DataTable> wrapper around Material React Table V3 with sensible defaults (sorting, filtering, pagination, density toggle, column visibility, CSV export).
+- Accessibility:
+  - Ensure keyboard nav, focus rings, aria-* as needed.
+  - Color contrast ratios per WCAG AA.
+
+4) File-by-file conversion loop (repeat for each HTML file)
+For each source HTML file F:
+4.1) Analyze F
+- Identify page purpose, routes/links, layout regions, repeated blocks, forms, scripts, and any tables (must become MRT v3).
+- Extract imagery, icons, and assets; map to /public and import paths.
+
+4.2) Define route and component
+- Create a route path mirroring the legacy URL (or an agreed new path).
+- Add src/pages/FNamePage.tsx and register it in react-router-dom.
+- Implement page layout using Tailwind; replace legacy CSS with Tailwind classes; move unique styles to component-level where necessary.
+
+4.3) Refactor structure into components
+- Break large sections into src/components/FName/* atoms/molecules/organisms.
+- Move repeated chunks to shared components if found elsewhere.
+
+4.4) Tables -> Material React Table V3
+- Identify all <table> instances. Replace with <MaterialReactTable> via a local <DataTable> wrapper.
+- Define column defs (accessorKey, header, cell formatters).
+- Support sorting, filtering, pagination, column visibility, row selection if applicable.
+- Add export (CSV) and density toggles if useful.
+- Keep data fetches separate; pass rows/columns as props; handle loading/empty/error states.
+
+4.5) Forms and validation
+- Convert forms to react-hook-form.
+- Add schema validation with zod; map errors to inline messages.
+- Preserve all original required fields and business rules.
+
+4.6) Client logic and data
+- Port inline scripts to React effects/handlers.
+- For remote data, create typed API functions in src/services/* with proper error handling and abort controllers.
+- Add loading skeletons/spinners using Tailwind.
+
+4.7) Styling and responsiveness
+- Translate layout to responsive Tailwind utilities.
+- Centralize colors, spacing, and typography via Tailwind tokens.
+- Maintain visual parity; adjust for improved accessibility and responsiveness where low-risk.
+
+4.8) Testing
+- Add unit tests for key components; RTL tests for page-level critical flows.
+- Snapshot test the page for structural regressions (optional).
+
+4.9) Performance and accessibility pass
+- Check bundle impact; split code at route level where heavy.
+- Optimize images (modern formats, sizes).
+- Run aXe and keyboard-only audits.
+
+4.10) Check-in and approval (gate)
+- Open PR named: “Revamp: FName to React + Tailwind (+ MRT if used)”.
+- Include Check-in Report (see section 5) with screenshots and parity notes.
+- Request review; once approved, merge to feature branch. Continue to next file.
+
+5) Check-in report template (attach to each PR)
+- Page converted: <legacy path> -> <new route>
+- Summary: What changed, components created/updated
+- Visual parity: Before/After screenshots, known minor deltas (if any)
+- Tables: Replaced with Material React Table V3 (columns listed, features enabled)
+- Forms: Fields, validation rules (zod), error states
+- Data: APIs touched, mock/stub strategy during dev
+- Accessibility: aXe results, keyboard nav confirmation
+- Tests: List and status
+- Perf: Notable optimizations or metrics
+- Open questions/decisions needed
+- Next file candidate
+
+6) Definition of Done for each file
+- Route implemented and navigable from app shell.
+- Visual and functional parity with legacy page.
+- All tables implemented with Material React Table V3 via <DataTable>.
+- Forms migrated to react-hook-form + zod with accessible errors.
+- No JS errors; ESLint/Prettier clean.
+- Unit/integration tests pass; coverage for critical logic.
+- aXe check clean (no critical issues).
+- Mobile and desktop responsive layouts validated.
+- PR merged after review.
+
+7) DataTable wrapper spec (for MRT v3 usage)
+- Location: src/components/data/DataTable.tsx
+- Props: columns, data, state (loading/error), onRowClick (optional), enableRowSelection (optional), initialState (pagination/sorting).
+- Defaults: column resizing, column visibility, sorting, global filter, pagination, density toggle, CSV export.
+- Theming: keep MUI theme minimal; prefer Tailwind for page layout; use MUI only for table internals.
+- Accessibility: ensure row and cell aria labels where needed; keyboard focus visible.
+
+8) Routing and navigation
+- Build top-level routes for each converted page.
+- Provide redirects from legacy paths if applicable.
+- Keep header/nav consistent; highlight active route.
+
+9) Assets and content
+- Move images/icons to /public or import as assets.
+- Replace deprecated tags/attributes; ensure alt text for images and descriptive labels.
+
+10) State and side effects
+- Prefer local component state; lift to context only when shared.
+- Isolate API calls; add basic caching/memoization if needed.
+- Handle errors with non-blocking toasts and inline messages.
+
+11) Documentation
+- Maintain a MIGRATION.md tracking:
+  - Completed pages (with PR links)
+  - Outstanding pages
+  - Known gaps / tech debt
+  - Decisions log (design tokens, accessibility exceptions, data changes)
+
+12) Rollout
+- Deploy preview environments per PR for stakeholder review.
+- After all files converted, switch default route to React app.
+- Keep feature/react-revamp behind an environment toggle until acceptance.
+
+13) Proposed migration order (example)
+- 1) index.html (landing)
+- 2) login.html / auth-related pages
+- 3) dashboard.html (tables -> MRT v3)
+- 4) high-traffic content pages with forms
+- 5) remaining informational pages
+- 6) admin/data-heavy pages (many tables -> MRT v3)
+
+14) Start signal
+- Confirm dependency versions, Tailwind tokens, and first file to convert.
+- Begin with file #1. Produce PR and check-in before proceeding to file #2.
