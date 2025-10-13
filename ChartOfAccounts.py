@@ -265,8 +265,26 @@ def list_accounts(page=1, per_page=50, search_term='', filters=None, sb=None):
     resp = query.execute()
     accounts = resp.data or []
 
-    # format money fields for display
+    # Fetch usernames for all creators
+    user_ids = list(set([a.get('createdbyuserid') for a in accounts if a.get('createdbyuserid')]))
+    username_map = {}
+    
+    if user_ids:
+        try:
+            # Note: PostgreSQL column names are case-insensitive, but the response will use lowercase
+            users_resp = sb.table('users').select('UserID, Username').in_('UserID', user_ids).execute()
+            if users_resp.data:
+                # The response data will have lowercase keys from Supabase
+                username_map = {u.get('userid') or u.get('UserID'): u.get('username') or u.get('Username') for u in users_resp.data}
+        except Exception as e:
+            print(f"Error fetching usernames: {e}")
+
+    # format money fields for display and add username
     for a in accounts:
+        # Add username from the map
+        creator_id = a.get('createdbyuserid')
+        a['createdby_username'] = username_map.get(creator_id, '')
+        
         for k in ['initialbalance']:
             if a.get(k) is not None:
                 try:

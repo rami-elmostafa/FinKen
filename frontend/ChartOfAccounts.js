@@ -46,7 +46,7 @@
         <td class="col-type">${a.category || ''}</td>
         <td class="col-term">${a.normalside || ''}</td>
         <td class="col-balance">${a.initialbalance_formatted || a.initialbalance || ''}</td>
-        <td class="col-createdby">${a.createdby || a.createdbyuserid || ''}</td>
+        <td class="col-createdby">${a.createdby_username || ''}</td>
         <td class="col-date">${dateCreated}</td>
         <td class="col-comments">${a.comment || ''}</td>
         <td class="col-actions"><button data-id="${a.accountid}" class="editBtn">Edit</button></td>
@@ -72,7 +72,7 @@
         const cl = Array.from(th.classList).find(c=>c.startsWith('col-')) || '';
         const key = cl.replace('col-','') || 'number';
         // map class to field names (lowercase to match database)
-        const map = { number: 'accountnumber', name: 'accountname', type: 'category', term:'normalside', balance:'initialbalance', createdby:'createdbyuserid', date:'datecreated' };
+        const map = { number: 'accountnumber', name: 'accountname', type: 'category', term:'normalside', balance:'initialbalance', createdby:'createdby_username', date:'datecreated' };
         const field = map[key] || 'accountnumber';
         if(currentSort.field===field) currentSort.asc=!currentSort.asc; else { currentSort.field=field; currentSort.asc=true }
         renderAccounts();
