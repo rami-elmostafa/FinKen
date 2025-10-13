@@ -1,6 +1,6 @@
 (function(){
   let accountsCache = [];
-  let currentSort = { field: 'AccountNumber', asc: true };
+  let currentSort = { field: 'accountnumber', asc: true };
 
   let currentPage = 1;
   const perPage = 20;
@@ -39,17 +39,17 @@
     });
     list.forEach(a => {
       const tr = document.createElement('tr');
-      const dateCreated = a.DateCreated ? new Date(a.DateCreated).toISOString().slice(0,10) : '';
+      const dateCreated = a.datecreated ? new Date(a.datecreated).toISOString().slice(0,10) : '';
       tr.innerHTML = `
-        <td class="col-number"><a href="/ledger/${a.AccountNumber}">${a.AccountNumber}</a></td>
-        <td class="col-name">${a.AccountName || ''}</td>
-        <td class="col-type">${a.Category || ''}</td>
-        <td class="col-term">${a.Term || ''}</td>
-        <td class="col-balance">${a.BalanceFormatted || a.Balance || ''}</td>
-        <td class="col-createdby">${a.CreatedBy || a.UserID || ''}</td>
+        <td class="col-number"><a href="/ledger/${a.accountnumber}">${a.accountnumber}</a></td>
+        <td class="col-name">${a.accountname || ''}</td>
+        <td class="col-type">${a.category || ''}</td>
+        <td class="col-term">${a.normalside || ''}</td>
+        <td class="col-balance">${a.initialbalance_formatted || a.initialbalance || ''}</td>
+        <td class="col-createdby">${a.createdby || a.createdbyuserid || ''}</td>
         <td class="col-date">${dateCreated}</td>
-        <td class="col-comments">${a.Comment || ''}</td>
-        <td class="col-actions"><button data-id="${a.AccountID}" class="editBtn">Edit</button></td>
+        <td class="col-comments">${a.comment || ''}</td>
+        <td class="col-actions"><button data-id="${a.accountid}" class="editBtn">Edit</button></td>
       `;
       tbody.appendChild(tr);
     });
@@ -71,9 +71,9 @@
         // find the first class that starts with 'col-'
         const cl = Array.from(th.classList).find(c=>c.startsWith('col-')) || '';
         const key = cl.replace('col-','') || 'number';
-        // map class to field names
-        const map = { number: 'AccountNumber', name: 'AccountName', type: 'Category', term:'Term', balance:'Balance', createdby:'CreatedBy', date:'DateCreated' };
-        const field = map[key] || 'AccountNumber';
+        // map class to field names (lowercase to match database)
+        const map = { number: 'accountnumber', name: 'accountname', type: 'category', term:'normalside', balance:'initialbalance', createdby:'createdbyuserid', date:'datecreated' };
+        const field = map[key] || 'accountnumber';
         if(currentSort.field===field) currentSort.asc=!currentSort.asc; else { currentSort.field=field; currentSort.asc=true }
         renderAccounts();
       });
