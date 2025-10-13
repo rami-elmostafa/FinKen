@@ -1,3 +1,7 @@
+from flask import Flask
+
+app = Flask(__name__, static_folder='frontend', static_url_path='/frontend')
+
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory
 import os
 from dotenv import load_dotenv
@@ -345,9 +349,9 @@ def api_get_account(account_id):
 def api_create_account():
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Access denied'}), 403
-    # Allow administrators and accountants to create accounts
+    # Only administrators may create accounts
     role = session.get('user_role', '').lower()
-    if role not in ('administrator', 'admin', 'accountant'):
+    if role not in ('administrator', 'admin'):
         return jsonify({'success': False, 'message': 'Access denied'}), 403
     data = request.get_json() or {}
     # attach user id from session
