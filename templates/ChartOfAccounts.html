@@ -6,8 +6,6 @@
   <title>Chart of Accounts</title>
   <style>
     * {
-      margin: 0;
-      padding: 0;
       box-sizing: border-box;
     }
         
@@ -35,6 +33,48 @@
       font-size: 32px;
       font-weight: 300;
     }
+    
+    #accountModal h2 {
+      margin-bottom: 12px;
+    }
+    
+    /* --- Form layout --- */
+    #accountForm {
+      display: grid;
+      /* 2 columns of fields; tweak to 3/4 if you prefer */
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 16px; /* row/column gaps */
+    }
+
+    /* Each label becomes a mini 2-column grid: [label text | control] */
+    #accountForm label {
+      display: grid;
+      grid-template-columns: 140px 1fr; /* label column width | input column */
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+
+    #accountForm input,
+    #accountForm select {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+
+    /* Actions row pinned to the right, consistent with your black Save button */
+    .modal-actions .btn {
+      background: #eee;
+      border: 1px solid #ddd;
+      padding: 6px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .modal-actions .btn:hover { background: #e6e6e6; }
         
     .add-btn {
       background-color:  #000000;

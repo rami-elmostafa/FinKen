@@ -48,6 +48,12 @@ def get_all_registration_requests(page=1, per_page=20, search_term='', status_fi
         dict: Response with success flag, list of requests, and pagination info
     """
     try:
+        if page < 1:
+            return {
+                'success': False,
+                'message': 'Page number cannot be less than 1'
+            }
+        
         sb = sb or _sb()
         
         # Start building the query
