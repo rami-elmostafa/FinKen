@@ -57,4 +57,4 @@ pip install -r requirements.txt
 app.py
 ```
 
-4. Open http://localhost:8000
+4. Open http://localhost:5000
