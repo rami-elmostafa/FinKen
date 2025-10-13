@@ -95,6 +95,7 @@
       form.querySelector('[name="AccountNumber"]').value = account.accountnumber || '';
       form.querySelector('[name="AccountName"]').value = account.accountname || '';
       form.querySelector('[name="Description"]').value = account.accountdescription || '';
+      form.querySelector('[name="NormalSide"]').value = account.normalside || 'Debit';
       form.querySelector('[name="Category"]').value = account.category || '';
       form.querySelector('[name="Subcategory"]').value = account.subcategory || '';
       form.querySelector('[name="InitialBalance"]').value = account.initialbalance || '0.00';
