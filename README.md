@@ -56,3 +56,5 @@ pip install -r requirements.txt
 ```bash
 app.py
 ```
+
+4. Open http://localhost:8000
