@@ -40,18 +40,19 @@ flask run
 4. Open http://localhost:5000
 
 Windows
+
 1. Create and activate virtual environment:
-```powershell
+```bash
 python -m venv venv
 venv/Scripts/Activate
 ```
 
 2. Install dependencies:
-```powershell
+```bash
 pip install -r requirements.txt
 ```
 
 3. Run the app:
-```powershell
+```bash
 app.py
 ```
