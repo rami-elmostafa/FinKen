@@ -1,3 +1,7 @@
+from flask import Flask
+
+app = Flask(__name__, static_folder='frontend', static_url_path='/frontend')
+
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory
 import os
 from dotenv import load_dotenv
@@ -17,6 +21,9 @@ from UserManagement import get_users_paginated, update_user_status, get_user_by_
 from UpdateUser import update_user
 from EmailUser import send_email, send_password_expiry_notifications
 from SupabaseClient import _sb
+from ChartOfAccounts import (
+    add_account, get_account_by_id, update_account, deactivate_account, list_accounts, get_ledger_entries
+)
 
 # Import the audit context functions
 try:
@@ -298,6 +305,98 @@ def manage_registrations():
                          current_search=search_term,
                          current_status=status_filter,
                          **user_context)
+
+
+@app.route('/ChartOfAccounts')
+@set_user_context
+def chart_of_accounts_page():
+    if 'user_id' not in session:
+        flash('Please sign in to access this page.', 'error')
+        return redirect(url_for('index'))
+    user_context = get_user_context()
+    return render_template('ChartOfAccounts.html', **user_context)
+
+
+@app.route('/api/accounts')
+@set_user_context
+def api_list_accounts():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 50, type=int)
+    search = request.args.get('search', '', type=str)
+    # basic filters
+    filters = {
+        'category': request.args.get('category'),
+        'subcategory': request.args.get('subcategory'),
+        'is_active': None if request.args.get('is_active') is None else (request.args.get('is_active').lower() == 'true')
+    }
+    result = list_accounts(page=page, per_page=per_page, search_term=search, filters=filters)
+    return jsonify(result)
+
+
+@app.route('/api/accounts/<int:account_id>')
+@set_user_context
+def api_get_account(account_id):
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    result = get_account_by_id(account_id)
+    return jsonify(result)
+
+
+@app.route('/api/accounts', methods=['POST'])
+@set_user_context
+def api_create_account():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    # Only administrators may create accounts
+    role = session.get('user_role', '').lower()
+    if role not in ('administrator', 'admin'):
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    data = request.get_json() or {}
+    # attach user id from session
+    data['UserID'] = session.get('user_id')
+    print(f"[api_create_account] incoming data: {data}")
+    result = add_account(data)
+    print(f"[api_create_account] result: {result}")
+    return jsonify(result)
+
+
+@app.route('/api/accounts/<int:account_id>', methods=['PUT'])
+@set_user_context
+def api_update_account(account_id):
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    # Only administrators may update account definitions
+    if session.get('user_role', '').lower() not in ('administrator', 'admin'):
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    data = request.get_json() or {}
+    result = update_account(account_id, data)
+    return jsonify(result)
+
+
+@app.route('/api/accounts/<int:account_id>/deactivate', methods=['POST'])
+@set_user_context
+def api_deactivate_account(account_id):
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    # Only administrators may deactivate accounts
+    if session.get('user_role', '').lower() not in ('administrator', 'admin'):
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    result = deactivate_account(account_id)
+    return jsonify(result)
+
+
+@app.route('/ledger/<account_number>')
+@set_user_context
+def ledger_placeholder(account_number):
+    # Placeholder ledger page for an account
+    if 'user_id' not in session:
+        flash('Please sign in to access this page.', 'error')
+        return redirect(url_for('index'))
+    user_context = get_user_context()
+    entries = get_ledger_entries(account_number)
+    return render_template('Ledger.html', account_number=account_number, entries=entries, **user_context)
 
 @app.route('/ApproveRegistration/<int:request_id>', methods=['POST'])
 @set_user_context
@@ -704,6 +803,110 @@ def cron_password_expiry_check():
             'success': False,
             'error': f'Cron job failed: {str(e)}',
             'users_notified': 0
+        }), 500
+
+@app.route('/EventLogs')
+@set_user_context
+def event_logs():
+    """Page to view event logs - Administrator only"""
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        flash('Access denied. Administrator privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    user_context = get_user_context()
+    return render_template('EventLogs.html', **user_context)
+
+@app.route('/api/event-logs')
+@set_user_context
+def api_event_logs():
+    """API endpoint to get paginated event logs with filters"""
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        sb = _sb()
+        
+        # Get pagination parameters
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        
+        # Get filter parameters
+        action_filter = request.args.get('action', '', type=str)
+        table_filter = request.args.get('table', '', type=str)
+        user_filter = request.args.get('user', '', type=str)
+        date_from = request.args.get('date_from', '', type=str)
+        date_to = request.args.get('date_to', '', type=str)
+        
+        # Build query
+        query = sb.table('event_logs').select(
+            'logid, userid, timestamp, actiontype, tablename, recordid, beforevalue, aftervalue, users(Username)',
+            count='exact'
+        )
+        
+        # Apply filters
+        if action_filter:
+            query = query.eq('actiontype', action_filter)
+        if table_filter:
+            query = query.eq('tablename', table_filter)
+        if user_filter:
+            query = query.ilike('users.Username', f'%{user_filter}%')
+        if date_from:
+            query = query.gte('timestamp', date_from)
+        if date_to:
+            # Add one day to include the entire end date
+            from datetime import datetime, timedelta
+            end_date = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1)
+            query = query.lt('timestamp', end_date.strftime('%Y-%m-%d'))
+        
+        # Order by timestamp descending (newest first)
+        query = query.order('timestamp', desc=True)
+        
+        # Calculate offset
+        offset = (page - 1) * per_page
+        
+        # Execute query with pagination
+        response = query.range(offset, offset + per_page - 1).execute()
+        
+        # Format the results
+        logs = []
+        for log in response.data:
+            logs.append({
+                'logid': log['logid'],
+                'userid': log['userid'],
+                'username': log['users']['Username'] if log.get('users') else 'Unknown',
+                'timestamp': log['timestamp'],
+                'actiontype': log['actiontype'],
+                'tablename': log['tablename'],
+                'recordid': log['recordid'],
+                'beforevalue': log['beforevalue'],
+                'aftervalue': log['aftervalue']
+            })
+        
+        # Get total count
+        total_count = response.count if hasattr(response, 'count') else len(logs)
+        total_pages = (total_count + per_page - 1) // per_page
+        
+        # Get available tables for filter dropdown
+        tables_query = sb.table('event_logs').select('tablename').execute()
+        available_tables = list(set([t['tablename'] for t in tables_query.data]))
+        available_tables.sort()
+        
+        return jsonify({
+            'success': True,
+            'logs': logs,
+            'pagination': {
+                'current_page': page,
+                'per_page': per_page,
+                'total_count': total_count,
+                'total_pages': total_pages
+            },
+            'available_tables': available_tables
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error fetching event logs: {str(e)}'
         }), 500
 
 if __name__ == '__main__':

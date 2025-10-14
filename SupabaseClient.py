@@ -15,11 +15,19 @@ def get_current_user():
     return current_user_id.get()
 
 def _sb():
-    #Load environment variables
-    load_dotenv()
+    # Load environment variables from a .env file if present
+    # Many dev setups keep a file named `.env`; this project currently has an `env` file
+    # (without the leading dot). Try both so local runs work without renaming files.
+    load_dotenv()  # loads .env by default
 
     url = os.environ.get('SUPABASE_URL')
     key = os.environ.get('SUPABASE_ANON_KEY')
+
+    # If variables are missing, try loading fallback 'env' file used in this repo
+    if (not url or not key) and os.path.exists('env'):
+        load_dotenv('env')
+        url = os.environ.get('SUPABASE_URL')
+        key = os.environ.get('SUPABASE_ANON_KEY')
 
     if not url or not key:
         raise RuntimeError("Supabase environment is not configured")

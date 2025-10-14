@@ -57,6 +57,9 @@
                 <li><a href="/Users">Users</a></li>
                 <li><a href="/ExpiringPasswords">Expiring Passwords</a></li>
             {% endif %}
+
+            <!-- Chart of Accounts is available to all signed-in users -->
+            <li><a href="/ChartOfAccounts">Chart of Accounts</a></li>
             
             <!-- Common options for all users -->
             <li><a href="#">Statements</a></li>
@@ -87,7 +90,7 @@
                 </div>
             </div>
             
-            <!-- Administrator-specific cards -->
+            <!-- Admin-specific quick actions -->
             {% if user_role == 'administrator' %}
                 <div class="card admin-card">
                     <div class="card-header">
@@ -108,20 +111,55 @@
                                 <i class="icon">🔑</i>
                                 <span>Expiring Passwords</span>
                             </a>
+                            <a href="/EventLogs" class="quick-action-btn">
+                                <i class="icon">📊</i>
+                                <span>Event Logs</span>
+                            </a>
                         </div>
                     </div>
                 </div>
             {% endif %}
+
+            <!-- General quick actions for all users -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Quick Actions</h2>
+                </div>
+                <div class="card-body">
+                    <div class="quick-actions">
+                        <a href="/ChartOfAccounts" class="quick-action-btn">
+                            <i class="icon">🧾</i>
+                            <span>Chart of Accounts</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        document.querySelector('.nav-toggle').addEventListener('click', function() {
-            document.querySelector('.navbar').style.left = '0';
+        const navToggle = document.querySelector('.nav-toggle');
+        const navbar = document.querySelector('.navbar');
+
+        function openNav() { navbar.classList.add('open'); }
+        function closeNav() { navbar.classList.remove('open'); }
+        function toggleNav() { navbar.classList.toggle('open'); }
+
+        navToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleNav();
         });
 
-        document.querySelector('.navbar').addEventListener('mouseleave', function() {
-            document.querySelector('.navbar').style.left = '-250px';
+        // Close nav when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!navbar.contains(e.target) && !navToggle.contains(e.target)) {
+                closeNav();
+            }
+        });
+
+        // Close on Escape
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'Escape') closeNav();
         });
     </script>
 </body>

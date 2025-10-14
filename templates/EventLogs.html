@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Logs - PocketWatch</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .event-logs-container {
+            padding: 20px;
+        }
+
+        .event-logs-header {
+            margin-bottom: 30px;
+        }
+
+        .event-logs-header h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .filters-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .filters-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .filter-btn {
+            padding: 8px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .filter-btn:hover {
+            background: #0056b3;
+        }
+
+        .reset-btn {
+            padding: 8px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .reset-btn:hover {
+            background: #545b62;
+        }
+
+        .event-logs-table {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f8f9fa;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: top;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .action-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .action-created {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .action-updated {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .action-deleted {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .changes-list {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .changes-list li {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .change-field {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .change-old {
+            color: #dc3545;
+            text-decoration: line-through;
+        }
+
+        .change-new {
+            color: #28a745;
+            font-weight: 500;
+        }
+
+        .no-changes {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .record-dropdown {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .record-dropdown-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .record-dropdown-header:hover {
+            background: #f8f9fa;
+        }
+
+        .dropdown-arrow {
+            font-size: 12px;
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+
+        .dropdown-arrow.expanded {
+            transform: rotate(90deg);
+        }
+
+        .record-dropdown-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .record-dropdown-content.expanded {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 20px;
+        }
+
+        .pagination button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination button:not(:disabled):hover {
+            background: #f8f9fa;
+        }
+
+        .pagination .page-info {
+            color: #555;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+
+        .timestamp {
+            color: #6c757d;
+            font-size: 13px;
+        }
+
+        .user-info {
+            color: #007bff;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header with Branding -->
+    <div class="header">
+        <div class="branding">
+            <div class="branding-content">
+                <img src="{{ url_for('static', filename='images/finkenlogo.png') }}" alt="FinKen Logo" class="logo-image">
+                <div class="branding-text">
+                    <h1><span class="pocket-text">Pocket</span><span class="watch-text">Watch</span></h1>
+                    <p>Financial Accounting App</p>
+                </div>
+            </div>
+        </div>
+        <!-- User Header -->
+        <div class="user-header">
+            <div class="user-info">
+                <span class="user-name">{{ user_name }}</span>
+                <span class="user-role-badge">{{ user_role.title() }}</span>
+            </div>
+            <div class="user-profile">
+                <img src="{{ url_for('profile_image', filename=user_profile_picture) }}" 
+                     alt="Profile Picture" class="profile-image">
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Navigation Menu -->
+    <button class="nav-toggle">Toggle Navigation</button>
+    <nav class="navbar">
+        <ul class="nav-list">
+            <img src="{{ url_for('static', filename='images/finkenlogo.png') }}" alt="FinKen Logo" class="logo-image">
+            <li><a href="/Home">Dashboard</a></li>
+            
+            <!-- Administrator-only options -->
+            {% if user_role == 'administrator' %}
+                <li><a href="/ManageRegistrations">Manage Registrations</a></li>
+                <li><a href="/Users">Users</a></li>
+                <li><a href="/ExpiringPasswords">Expiring Passwords</a></li>
+                <li class="active"><a href="/EventLogs">Event Logs</a></li>
+            {% endif %}
+
+            <!-- Chart of Accounts is available to all signed-in users -->
+            <li><a href="/ChartOfAccounts">Chart of Accounts</a></li>
+            
+            <!-- Common options for all users -->
+            <li><a href="#">Statements</a></li>
+            <li><a href="/SignOut">Sign Out</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="event-logs-container">
+            <div class="event-logs-header">
+                <h2>Event Logs</h2>
+                <p>Track all system activities and changes</p>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="filters-section">
+                <div class="filters-row">
+                    <div class="filter-group">
+                        <label for="actionFilter">Action Type</label>
+                        <select id="actionFilter">
+                            <option value="">All Actions</option>
+                            <option value="INSERT">Created</option>
+                            <option value="UPDATE">Updated</option>
+                            <option value="DELETE">Deleted</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="tableFilter">Table</label>
+                        <select id="tableFilter">
+                            <option value="">All Tables</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="userFilter">User</label>
+                        <input type="text" id="userFilter" placeholder="Search by user...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="dateFromFilter">From Date</label>
+                        <input type="date" id="dateFromFilter">
+                    </div>
+                    <div class="filter-group">
+                        <label for="dateToFilter">To Date</label>
+                        <input type="date" id="dateToFilter">
+                    </div>
+                    <div class="filter-group" style="flex: 0;">
+                        <label>&nbsp;</label>
+                        <button class="filter-btn" onclick="applyFilters()">Apply</button>
+                    </div>
+                    <div class="filter-group" style="flex: 0;">
+                        <label>&nbsp;</label>
+                        <button class="reset-btn" onclick="resetFilters()">Reset</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Logs Table -->
+            <div class="event-logs-table">
+                <div class="table-wrapper">
+                    <div id="loadingIndicator" class="loading">Loading event logs...</div>
+                    <div id="errorMessage" class="error-message" style="display: none;"></div>
+                    <table id="eventLogsTable" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Table</th>
+                                <th>Record ID</th>
+                                <th>Changes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventLogsBody">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="paginationControls" style="display: none;">
+                <button id="prevBtn" onclick="loadPage(currentPage - 1)">Previous</button>
+                <span class="page-info" id="pageInfo">Page 1</span>
+                <button id="nextBtn" onclick="loadPage(currentPage + 1)">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let totalPages = 1;
+        let currentFilters = {};
+
+        // Navigation toggle functionality
+        const navToggle = document.querySelector('.nav-toggle');
+        const navbar = document.querySelector('.navbar');
+
+        function openNav() { navbar.classList.add('open'); }
+        function closeNav() { navbar.classList.remove('open'); }
+        function toggleNav() { navbar.classList.toggle('open'); }
+
+        navToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleNav();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!navbar.contains(e.target) && !navToggle.contains(e.target)) {
+                closeNav();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'Escape') closeNav();
+        });
+
+        // Load event logs
+        async function loadEventLogs(page = 1) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const errorMessage = document.getElementById('errorMessage');
+            const table = document.getElementById('eventLogsTable');
+            const paginationControls = document.getElementById('paginationControls');
+
+            loadingIndicator.style.display = 'block';
+            errorMessage.style.display = 'none';
+            table.style.display = 'none';
+
+            try {
+                const params = new URLSearchParams({
+                    page: page,
+                    per_page: 20,
+                    ...currentFilters
+                });
+
+                const response = await fetch(`/api/event-logs?${params}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    displayEventLogs(data.logs);
+                    updatePagination(data.pagination);
+                    loadingIndicator.style.display = 'none';
+                    table.style.display = 'table';
+                    paginationControls.style.display = 'flex';
+
+                    // Populate table filter if not already populated
+                    populateTableFilter(data.available_tables || []);
+                } else {
+                    throw new Error(data.message || 'Failed to load event logs');
+                }
+            } catch (error) {
+                loadingIndicator.style.display = 'none';
+                errorMessage.textContent = `Error: ${error.message}`;
+                errorMessage.style.display = 'block';
+            }
+        }
+
+        function displayEventLogs(logs) {
+            const tbody = document.getElementById('eventLogsBody');
+            tbody.innerHTML = '';
+
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #6c757d;">No event logs found</td></tr>';
+                return;
+            }
+
+            logs.forEach(log => {
+                const tr = document.createElement('tr');
+                
+                // Format timestamp
+                const timestamp = new Date(log.timestamp).toLocaleString();
+                
+                // Determine action type and badge class
+                let actionBadge = '';
+                let actionClass = '';
+                if (log.actiontype === 'INSERT') {
+                    actionBadge = 'Created';
+                    actionClass = 'action-created';
+                } else if (log.actiontype === 'UPDATE') {
+                    actionBadge = 'Updated';
+                    actionClass = 'action-updated';
+                } else if (log.actiontype === 'DELETE') {
+                    actionBadge = 'Deleted';
+                    actionClass = 'action-deleted';
+                } else {
+                    actionBadge = log.actiontype;
+                    actionClass = '';
+                }
+
+                // Format changes
+                const changesHtml = formatChanges(log.beforevalue, log.aftervalue, log.actiontype);
+
+                tr.innerHTML = `
+                    <td><span class="timestamp">${timestamp}</span></td>
+                    <td><span class="user-info">${log.username || 'Unknown User'}</span></td>
+                    <td><span class="action-badge ${actionClass}">${actionBadge}</span></td>
+                    <td>${log.tablename}</td>
+                    <td>${log.recordid}</td>
+                    <td>${changesHtml}</td>
+                `;
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        function formatChanges(beforeValue, afterValue, actionType) {
+            // Handle creation (INSERT)
+            if (!beforeValue && afterValue) {
+                const after = typeof afterValue === 'string' ? JSON.parse(afterValue) : afterValue;
+                const fields = [];
+                
+                Object.keys(after || {}).forEach(key => {
+                    const value = after[key];
+                    const displayValue = value !== null && value !== undefined ? value : 'null';
+                    fields.push(`
+                        <li>
+                            <span class="change-field">${key}:</span>
+                            <span class="change-new">${displayValue}</span>
+                        </li>
+                    `);
+                });
+
+                const dropdownId = `dropdown-${Math.random().toString(36).substr(2, 9)}`;
+                return `
+                    <div class="record-dropdown">
+                        <div class="record-dropdown-header" onclick="toggleDropdown('${dropdownId}')">
+                            <span class="dropdown-arrow" id="arrow-${dropdownId}">▶</span>
+                            <strong class="change-new">New record created</strong>
+                        </div>
+                        <div class="record-dropdown-content" id="${dropdownId}">
+                            <ul class="changes-list">${fields.join('')}</ul>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Handle deletion (DELETE)
+            if (beforeValue && !afterValue) {
+                const before = typeof beforeValue === 'string' ? JSON.parse(beforeValue) : beforeValue;
+                const fields = [];
+                
+                Object.keys(before || {}).forEach(key => {
+                    const value = before[key];
+                    const displayValue = value !== null && value !== undefined ? value : 'null';
+                    fields.push(`
+                        <li>
+                            <span class="change-field">${key}:</span>
+                            <span class="change-old">${displayValue}</span>
+                        </li>
+                    `);
+                });
+
+                const dropdownId = `dropdown-${Math.random().toString(36).substr(2, 9)}`;
+                return `
+                    <div class="record-dropdown">
+                        <div class="record-dropdown-header" onclick="toggleDropdown('${dropdownId}')">
+                            <span class="dropdown-arrow" id="arrow-${dropdownId}">▶</span>
+                            <strong class="change-old">Record deleted</strong>
+                        </div>
+                        <div class="record-dropdown-content" id="${dropdownId}">
+                            <ul class="changes-list">${fields.join('')}</ul>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Handle update (UPDATE)
+            if (beforeValue && afterValue) {
+                const changes = [];
+                const before = typeof beforeValue === 'string' ? JSON.parse(beforeValue) : beforeValue;
+                const after = typeof afterValue === 'string' ? JSON.parse(afterValue) : afterValue;
+
+                // Compare the two objects and find differences
+                const allKeys = new Set([...Object.keys(before || {}), ...Object.keys(after || {})]);
+                
+                allKeys.forEach(key => {
+                    const beforeVal = before?.[key];
+                    const afterVal = after?.[key];
+
+                    // Skip if values are the same
+                    if (JSON.stringify(beforeVal) === JSON.stringify(afterVal)) {
+                        return;
+                    }
+
+                    // Format the change
+                    const beforeDisplay = beforeVal !== null && beforeVal !== undefined ? beforeVal : 'null';
+                    const afterDisplay = afterVal !== null && afterVal !== undefined ? afterVal : 'null';
+
+                    changes.push(`
+                        <li>
+                            <span class="change-field">${key}:</span>
+                            <span class="change-old">${beforeDisplay}</span>
+                            →
+                            <span class="change-new">${afterDisplay}</span>
+                        </li>
+                    `);
+                });
+
+                if (changes.length === 0) {
+                    return '<span class="no-changes">No changes detected</span>';
+                }
+
+                return `<ul class="changes-list">${changes.join('')}</ul>`;
+            }
+
+            return '<span class="no-changes">No data available</span>';
+        }
+
+        function toggleDropdown(dropdownId) {
+            const content = document.getElementById(dropdownId);
+            const arrow = document.getElementById(`arrow-${dropdownId}`);
+            
+            if (content && arrow) {
+                content.classList.toggle('expanded');
+                arrow.classList.toggle('expanded');
+            }
+        }
+
+        function updatePagination(pagination) {
+            currentPage = pagination.current_page;
+            totalPages = pagination.total_pages;
+
+            document.getElementById('pageInfo').textContent = 
+                `Page ${currentPage} of ${totalPages} (${pagination.total_count} total)`;
+            
+            document.getElementById('prevBtn').disabled = currentPage <= 1;
+            document.getElementById('nextBtn').disabled = currentPage >= totalPages;
+        }
+
+        function loadPage(page) {
+            if (page >= 1 && page <= totalPages) {
+                loadEventLogs(page);
+            }
+        }
+
+        function applyFilters() {
+            currentFilters = {};
+
+            const actionFilter = document.getElementById('actionFilter').value;
+            const tableFilter = document.getElementById('tableFilter').value;
+            const userFilter = document.getElementById('userFilter').value;
+            const dateFromFilter = document.getElementById('dateFromFilter').value;
+            const dateToFilter = document.getElementById('dateToFilter').value;
+
+            if (actionFilter) currentFilters.action = actionFilter;
+            if (tableFilter) currentFilters.table = tableFilter;
+            if (userFilter) currentFilters.user = userFilter;
+            if (dateFromFilter) currentFilters.date_from = dateFromFilter;
+            if (dateToFilter) currentFilters.date_to = dateToFilter;
+
+            loadEventLogs(1);
+        }
+
+        function resetFilters() {
+            document.getElementById('actionFilter').value = '';
+            document.getElementById('tableFilter').value = '';
+            document.getElementById('userFilter').value = '';
+            document.getElementById('dateFromFilter').value = '';
+            document.getElementById('dateToFilter').value = '';
+            currentFilters = {};
+            loadEventLogs(1);
+        }
+
+        function populateTableFilter(tables) {
+            const tableFilter = document.getElementById('tableFilter');
+            // Only populate if not already populated
+            if (tableFilter.options.length <= 1 && tables.length > 0) {
+                tables.forEach(table => {
+                    const option = document.createElement('option');
+                    option.value = table;
+                    option.textContent = table;
+                    tableFilter.appendChild(option);
+                });
+            }
+        }
+
+        // Load initial data
+        loadEventLogs(1);
+    </script>
+</body>
+</html>
