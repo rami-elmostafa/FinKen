@@ -59,27 +59,72 @@
     /* --- Form Layout --- */
     /* Sets up a grid format for neatness */
     #accountForm {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
-    /* Turns each label into a grid for neatness */
-    #accountForm label {
+    #accountForm .form-row {
       display: grid;
-      grid-template-columns: 140px 1fr;
-      align-items: center;
-      gap: 8px;
-      width: 100%;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    #accountForm .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    #accountForm .form-group label {
+      font-weight: 500;
+      font-size: 14px;
+      color: #333;
+    }
+
+    #accountForm .required {
+      color: #ff4444;
     }
 
     #accountForm input,
     #accountForm select {
       width: 100%;
-      padding: 6px 8px;
+      padding: 8px 12px;
       border: 1px solid #ddd;
       border-radius: 4px;
       font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    #accountForm input:focus,
+    #accountForm select:focus {
+      outline: none;
+      border-color: #4a9eff;
+      box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.1);
+    }
+
+    /* Modal positioning and sizing */
+    #accountModal {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #accountModal .modal-content {
+      margin: 2vh auto;
+      max-height: 85vh;
+      max-width: 700px;
+      width: 90%;
+      overflow-y: auto;
+    }
+
+    .modal-actions {
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
     }
 
     .modal-actions .btn, #cancelModal {
