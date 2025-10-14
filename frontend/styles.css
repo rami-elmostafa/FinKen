@@ -398,53 +398,6 @@ body {
 
 .flash-message.info {
     background-color: #d1ecf1;
-
-/* Chart of Accounts page styles */
-.topbar {
-    display:flex;
-    align-items:center;
-    gap:16px;
-    padding:12px 20px;
-    background: #fff;
-    border-bottom: 1px solid #eee;
-}
-.logo { height:48px }
-.top-nav { margin-left:auto; display:flex; gap:12px }
-.top-nav a { color:#333; text-decoration:none; padding:6px 10px; border-radius:6px }
-.top-nav a:hover { background:#f6f6f6 }
-.container { max-width:1100px; margin:20px auto; padding:20px }
-.controls { display:flex; gap:8px; align-items:center; margin-bottom:12px }
-.data-table { width:100%; border-collapse:collapse; background:#fff }
-.data-table th, .data-table td { padding:8px 10px; border:1px solid #eee }
-.data-table thead { background:#f8f8f8 }
-.modal { display:none; position:fixed; inset:0; background: rgba(0,0,0,0.4); align-items:center; justify-content:center }
-.modal .modal-content { background:#fff; padding:18px; border-radius:8px; width:480px }
-.modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:12px }
-
-/* top-left calendar widget */
-.calendar-widget { position: fixed; left: 12px; top: 12px; background:#fff; border:1px solid #eee; padding:8px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08) }
-
-/* help modal */
-.help-btn { position: fixed; right: 12px; top: 12px; background:#FFD100; border:none; padding:8px 12px; border-radius:8px; cursor:pointer }
-.help-modal { display:none; position:fixed; inset:60px 60px 60px 60px; background:#fff; padding:20px; border-radius:8px; overflow:auto }
-
-/* pagination */
-.pagination { display:flex; gap:6px; justify-content:center; margin-top:12px }
-.pagination button { padding:6px 10px; border-radius:6px; border:1px solid #ddd; background:#fff }
-
-    color: #0c5460;
-    border: 1px solid #bee5eb;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 /* Sign In Form Specific Styles */
@@ -1096,6 +1049,14 @@ body {
     width: auto;
 }
 
+#new-account-btn {
+    margin-left: auto;
+    white-space: nowrap;
+    flex-shrink: 0;
+    flex-grow: 0;
+    width: auto;
+}
+
 /* Modal Styles */
 .modal {
     position: fixed;
@@ -1348,6 +1309,7 @@ body {
 .btn-primary {
     background-color: #007bff;
     border-color: #007bff;
+    color: black;
 }
 
 .btn-primary:hover {
@@ -1559,4 +1521,79 @@ body {
         padding: 6px 4px;
         font-size: 11px;
     }
+}
+
+/*Styles for Chart of Accounts */
+.top-left-container {
+    position: fixed;
+    top: 60px;
+    left: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.calendar-widget {
+    background-color: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.help-btn {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.help-btn:hover {
+    background-color: #0056b3;
+}
+
+.help-modal {
+    display: none;
+    position: fixed;
+    z-index: 1001;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 500px;
+    background-color: lightgoldenrodyellow;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+.help-modal h2 {
+    margin-top: 0;
+}
+
+.help-modal button {
+    margin-top: 15px;
+    float: right;
+}
+.search-btn{
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.search-btn:hover {
+    background-color: #0056b3;
 }
