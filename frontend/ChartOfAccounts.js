@@ -7,10 +7,10 @@
 
   async function fetchAccounts(page = 1){
     currentPage = page;
-    const q = document.getElementById('search').value || '';
+    const q = document.getElementById('search-input').value || ''; // Changed from 'search' to 'search-input'
     const res = await fetch(`/api/accounts?search=${encodeURIComponent(q)}&page=${page}&per_page=${perPage}`);
     const body = await res.json();
-    const tbody = document.querySelector('#accountsTable tbody');
+    const tbody = document.querySelector('#accounts-table-body'); // Use the correct ID
     tbody.innerHTML = '';
     if(body.success){
       accountsCache = body.accounts || [];
@@ -23,12 +23,27 @@
       info.innerText = `Page ${pagination.current_page || currentPage} of ${pagination.total_pages || 1} — ${pagination.total_accounts || 0} accounts`;
       prev.disabled = !(pagination.has_prev);
       next.disabled = !(pagination.has_next);
+    } else {
+      console.error('Failed to fetch accounts:', body.message);
+      // Show error message to user
+      document.getElementById('no-accounts').style.display = 'block';
+      document.getElementById('loading').style.display = 'none';
     }
   }
 
   function renderAccounts(){
-    const tbody = document.querySelector('#accountsTable tbody');
+    const tbody = document.querySelector('#accounts-table-body');
     tbody.innerHTML = '';
+
+    // Hide loading and no-accounts messages
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('no-accounts').style.display = 'none';
+
+    if (accountsCache.length === 0) {
+      document.getElementById('no-accounts').style.display = 'block';
+      return;
+    }
+
     const list = accountsCache.slice();
     list.sort((a,b)=>{
       const f = currentSort.field;
@@ -51,7 +66,6 @@
          </div>
         `;
       }
-
       tr.innerHTML = `
         <td class="col-number"><a href="/ledger/${a.accountnumber}">${a.accountnumber}</a></td>
         <td class="col-name">${a.accountname || ''}${statusBadge}</td>
@@ -61,7 +75,7 @@
         <td class="col-createdby">${a.createdby_username || ''}</td>
         <td class="col-date">${dateCreated}</td>
         <td class="col-comments">${a.comment || ''}</td>
-        <td>${actionButtons}</td>
+         <td class="col-actions">${actionButtons}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -166,7 +180,7 @@
     document.getElementById('nextPage').addEventListener('click', ()=>{ fetchAccounts(currentPage+1) });
 
     // header sorting
-    document.querySelectorAll('#accounts-table thead th').forEach(th=>{
+    document.querySelectorAll('#accountsTable thead th').forEach(th=>{
       th.style.cursor='pointer';
       th.addEventListener('click', ()=>{
         // find the first class that starts with 'col-'
