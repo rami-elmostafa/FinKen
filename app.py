@@ -805,6 +805,110 @@ def cron_password_expiry_check():
             'users_notified': 0
         }), 500
 
+@app.route('/EventLogs')
+@set_user_context
+def event_logs():
+    """Page to view event logs - Administrator only"""
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        flash('Access denied. Administrator privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    user_context = get_user_context()
+    return render_template('EventLogs.html', **user_context)
+
+@app.route('/api/event-logs')
+@set_user_context
+def api_event_logs():
+    """API endpoint to get paginated event logs with filters"""
+    if 'user_id' not in session or session.get('user_role') != 'administrator':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        sb = _sb()
+        
+        # Get pagination parameters
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        
+        # Get filter parameters
+        action_filter = request.args.get('action', '', type=str)
+        table_filter = request.args.get('table', '', type=str)
+        user_filter = request.args.get('user', '', type=str)
+        date_from = request.args.get('date_from', '', type=str)
+        date_to = request.args.get('date_to', '', type=str)
+        
+        # Build query
+        query = sb.table('event_logs').select(
+            'logid, userid, timestamp, actiontype, tablename, recordid, beforevalue, aftervalue, users(Username)',
+            count='exact'
+        )
+        
+        # Apply filters
+        if action_filter:
+            query = query.eq('actiontype', action_filter)
+        if table_filter:
+            query = query.eq('tablename', table_filter)
+        if user_filter:
+            query = query.ilike('users.Username', f'%{user_filter}%')
+        if date_from:
+            query = query.gte('timestamp', date_from)
+        if date_to:
+            # Add one day to include the entire end date
+            from datetime import datetime, timedelta
+            end_date = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1)
+            query = query.lt('timestamp', end_date.strftime('%Y-%m-%d'))
+        
+        # Order by timestamp descending (newest first)
+        query = query.order('timestamp', desc=True)
+        
+        # Calculate offset
+        offset = (page - 1) * per_page
+        
+        # Execute query with pagination
+        response = query.range(offset, offset + per_page - 1).execute()
+        
+        # Format the results
+        logs = []
+        for log in response.data:
+            logs.append({
+                'logid': log['logid'],
+                'userid': log['userid'],
+                'username': log['users']['Username'] if log.get('users') else 'Unknown',
+                'timestamp': log['timestamp'],
+                'actiontype': log['actiontype'],
+                'tablename': log['tablename'],
+                'recordid': log['recordid'],
+                'beforevalue': log['beforevalue'],
+                'aftervalue': log['aftervalue']
+            })
+        
+        # Get total count
+        total_count = response.count if hasattr(response, 'count') else len(logs)
+        total_pages = (total_count + per_page - 1) // per_page
+        
+        # Get available tables for filter dropdown
+        tables_query = sb.table('event_logs').select('tablename').execute()
+        available_tables = list(set([t['tablename'] for t in tables_query.data]))
+        available_tables.sort()
+        
+        return jsonify({
+            'success': True,
+            'logs': logs,
+            'pagination': {
+                'current_page': page,
+                'per_page': per_page,
+                'total_count': total_count,
+                'total_pages': total_pages
+            },
+            'available_tables': available_tables
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error fetching event logs: {str(e)}'
+        }), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))
     app.run(host='0.0.0.0', port=port)
