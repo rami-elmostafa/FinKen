@@ -171,26 +171,23 @@
         renderAccounts();
       });
     });
-      // calendar widget
-      const cal = document.createElement('div');
-      cal.className = 'calendar-widget';
-      cal.innerText = new Date().toLocaleDateString();
-      document.body.appendChild(cal);
-      // help button
-      const helpBtn = document.createElement('button');
-      helpBtn.className = 'help-btn';
-      helpBtn.innerText = 'Help';
-      helpBtn.addEventListener('click', ()=>{
-        let m = document.querySelector('.help-modal');
-        if(!m){
-          m = document.createElement('div'); m.className='help-modal';
-          m.innerHTML = '<h2>Help - Chart of Accounts</h2><p>Use this page to add, edit, search and deactivate accounts. Admins can create and modify accounts. Click an account number to view its ledger.</p><button id="closeHelp">Close</button>';
-          document.body.appendChild(m);
-          m.querySelector('#closeHelp').addEventListener('click', ()=>m.style.display='none');
-        }
-        m.style.display = 'block';
-      });
-      document.body.appendChild(helpBtn);
+
+    // help button
+    const helpBtn = document.createElement('button');
+    helpBtn.className = 'help-btn';
+    helpBtn.innerText = 'Help';
+    helpBtn.addEventListener('click', ()=>{
+      let m = document.querySelector('.help-modal');
+      if(!m){
+        m = document.createElement('div'); m.className='help-modal';
+        m.innerHTML = '<h2>Help - Chart of Accounts</h2><p>Use this page to add, edit, search and deactivate accounts. Admins can create and modify accounts. Click an account number to view its ledger.</p><button id="closeHelp">Close</button>';
+        document.body.appendChild(m);
+        m.querySelector('#closeHelp').addEventListener('click', ()=>m.style.display='none');
+      }
+      m.style.display = 'block';
+    });
+    document.body.appendChild(helpBtn);
+
     document.getElementById('cancelModal').addEventListener('click', ()=>{
       document.getElementById('accountModal').style.display = 'none';
     });

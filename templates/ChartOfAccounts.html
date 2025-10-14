@@ -11,6 +11,22 @@
       background-color: #f5f5f5;
     }
 
+    /* Calendar widget - ensure it's visible */
+    .calendar-widget {
+      position: fixed;
+      left: 200px;
+      top: 15px;
+      background: #fff;
+      border: 1px solid #eee;
+      padding: 8px 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      z-index: 9999;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+    }
+
     /* Content Container */
     .content-wrapper {
       padding: 20px;
@@ -329,6 +345,29 @@
     </div>
   </div>
 
+  <!-- Navigation Menu -->
+  <button class="nav-toggle">Toggle Navigation</button>
+  <nav class="navbar">
+    <ul class="nav-list">
+      <img src="{{ url_for('static', filename='images/finkenlogo.png') }}" alt="FinKen Logo" class="logo-image">
+      <li><a href="/Home">Dashboard</a></li>
+      
+      <!-- Administrator-only options -->
+      {% if user_role == 'administrator' %}
+        <li><a href="/ManageRegistrations">Manage Registrations</a></li>
+        <li><a href="/Users">Users</a></li>
+        <li><a href="/ExpiringPasswords">Expiring Passwords</a></li>
+      {% endif %}
+
+      <!-- Chart of Accounts is available to all signed-in users -->
+      <li class="active"><a href="/ChartOfAccounts">Chart of Accounts</a></li>
+      
+      <!-- Common options for all users -->
+      <li><a href="#">Statements</a></li>
+      <li><a href="/SignOut">Sign Out</a></li>
+    </ul>
+  </nav>
+
   <!-- Main Content -->
   <div class="content-wrapper">
   <div class="accounts-header">
@@ -406,6 +445,41 @@
 
   </div> <!-- Close content-wrapper -->
 
+  <!-- Calendar widget -->
+  <div class="calendar-widget" id="calendarWidget"></div>
+
   <script src="/frontend/ChartOfAccounts.js"></script>
+  <script>
+    const navToggle = document.querySelector('.nav-toggle');
+    const navbar = document.querySelector('.navbar');
+
+    function openNav() { navbar.classList.add('open'); }
+    function closeNav() { navbar.classList.remove('open'); }
+    function toggleNav() { navbar.classList.toggle('open'); }
+
+    navToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleNav();
+    });
+
+    // Close nav when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!navbar.contains(e.target) && !navToggle.contains(e.target)) {
+        closeNav();
+      }
+    });
+
+    // Close on Escape
+    document.addEventListener('keyup', (e) => {
+      if (e.key === 'Escape') closeNav();
+    });
+
+    // Initialize calendar widget
+    const calWidget = document.getElementById('calendarWidget');
+    if (calWidget) {
+      const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+      calWidget.innerText = new Date().toLocaleDateString('en-US', options);
+    }
+  </script>
 </body>
 </html>
