@@ -91,20 +91,27 @@
       // Change modal title
       document.getElementById('modalTitle').innerText = 'Edit Account';
       
-      // Populate form fields
-      form.querySelector('[name="AccountNumber"]').value = account.accountnumber || '';
-      form.querySelector('[name="AccountName"]').value = account.accountname || '';
-      form.querySelector('[name="Description"]').value = account.accountdescription || '';
-      form.querySelector('[name="NormalSide"]').value = account.normalside || 'Debit';
-      form.querySelector('[name="Category"]').value = account.category || '';
-      form.querySelector('[name="Subcategory"]').value = account.subcategory || '';
-      form.querySelector('[name="InitialBalance"]').value = account.initialbalance || '0.00';
-      form.querySelector('[name="Debit"]').value = account.debit || '0.00';
-      form.querySelector('[name="Credit"]').value = account.credit || '0.00';
-      form.querySelector('[name="Balance"]').value = account.balance || '0.00';
-      form.querySelector('[name="Statement"]').value = account.statementtype || 'BS';
-      form.querySelector('[name="Order"]').value = account.displayorder || '';
-      form.querySelector('[name="Comment"]').value = account.comment || '';
+      // Populate form fields with null checks
+      const setFieldValue = (name, value) => {
+        const field = form.querySelector(`[name="${name}"]`);
+        if (field) {
+          field.value = value || '';
+        }
+      };
+      
+      setFieldValue('AccountNumber', account.accountnumber);
+      setFieldValue('AccountName', account.accountname);
+      setFieldValue('Description', account.accountdescription);
+      setFieldValue('NormalSide', account.normalside || 'Debit');
+      setFieldValue('Category', account.category);
+      setFieldValue('Subcategory', account.subcategory);
+      setFieldValue('InitialBalance', account.initialbalance || '0.00');
+      setFieldValue('Debit', account.debit || '0.00');
+      setFieldValue('Credit', account.credit || '0.00');
+      setFieldValue('Balance', account.balance || '0.00');
+      setFieldValue('Statement', account.statementtype || 'BS');
+      setFieldValue('Order', account.displayorder);
+      setFieldValue('Comment', account.comment);
       
       // Store account ID for update
       form.setAttribute('data-account-id', accountId);
@@ -112,6 +119,7 @@
       modal.style.display = 'block';
     } catch (err) {
       alert('Error loading account: ' + err.message);
+      console.error('Error in openEditModal:', err);
     }
   }
 
@@ -191,6 +199,11 @@
       const form = e.target;
       const data = {};
       new FormData(form).forEach((v,k)=>data[k]=v);
+      
+      // Filter out fields that don't exist in the database table
+      // Debit, Credit, and Balance are UI-only fields for display purposes
+      const fieldsToExclude = ['Debit', 'Credit', 'Balance'];
+      fieldsToExclude.forEach(field => delete data[field]);
       
       const accountId = form.getAttribute('data-account-id');
       const isEdit = !!accountId;

@@ -351,16 +351,13 @@
         <label>Account Name <input name="AccountName" required></label>
         <label>Description <input name="Description"></label>
         <label>Normal Side <select name="NormalSide" required><option value="Debit">Debit</option><option value="Credit">Credit</option></select></label>
-        <label>Category <input name="Category"></label>
+        <label>Category <input name="Category" required></label>
         <label>Subcategory <input name="Subcategory"></label>
-        <label>Initial Balance <input name="InitialBalance" value="0.00"></label>
-        <label>Debit <input name="Debit" value="0.00"></label>
-        <label>Credit <input name="Credit" value="0.00"></label>
-        <label>Balance <input name="Balance" value="0.00"></label>
+        <label>Initial Balance <input name="InitialBalance" type="number" step="0.01" value="0.00"></label>
         <label>Statement <select name="Statement"><option value="BS">BS</option><option value="IS">IS</option><option value="RE">RE</option></select></label>
-        <label>Order <input name="Order"></label>
+        <label>Order <input name="Order" type="number"></label>
         <label>Comment <input name="Comment"></label>
-        <div class="modal-actions" style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+        <div class="modal-actions" style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end; grid-column: 1 / -1;">
           <button type="submit" class="add-btn">Save</button>
           <button type="button" id="cancelModal" class="btn">Cancel</button>
         </div>
