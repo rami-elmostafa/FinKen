@@ -37,10 +37,24 @@
       if(av === bv) return 0;
       return currentSort.asc ? (av>bv?1:-1) : (av>bv?-1:1);
     });
+    
+    // Check if user is admin
+    const isAdmin = window.userRole === 'administrator';
+    
     list.forEach(a => {
       const tr = document.createElement('tr');
       const dateCreated = a.datecreated ? new Date(a.datecreated).toISOString().slice(0,10) : '';
       const statusBadge = a.isactive === false ? '<span style="color:#ff4444;font-weight:bold;"> (Inactive)</span>' : '';
+      
+      // Only show action buttons if user is admin
+      let actionButtons = '';
+      if (isAdmin) {
+        actionButtons = `
+          <button data-id="${a.accountid}" class="editBtn">Edit</button>
+          ${a.isactive !== false ? `<button data-id="${a.accountid}" class="deactivateBtn" style="background-color:#ff4444;margin-left:4px;">Deactivate</button>` : ''}
+        `;
+      }
+      
       tr.innerHTML = `
         <td class="col-number"><a href="/ledger/${a.accountnumber}">${a.accountnumber}</a></td>
         <td class="col-name">${a.accountname || ''}${statusBadge}</td>
@@ -50,29 +64,28 @@
         <td class="col-createdby">${a.createdby_username || ''}</td>
         <td class="col-date">${dateCreated}</td>
         <td class="col-comments">${a.comment || ''}</td>
-        <td class="col-actions">
-          <button data-id="${a.accountid}" class="editBtn">Edit</button>
-          ${a.isactive !== false ? `<button data-id="${a.accountid}" class="deactivateBtn" style="background-color:#ff4444;margin-left:4px;">Deactivate</button>` : ''}
-        </td>
+        <td class="col-actions">${actionButtons}</td>
       `;
       tbody.appendChild(tr);
     });
 
-    // Attach event listeners for edit buttons
-    document.querySelectorAll('.editBtn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        const accountId = e.target.getAttribute('data-id');
-        await openEditModal(accountId);
+    // Attach event listeners for edit buttons (only if admin)
+    if (isAdmin) {
+      document.querySelectorAll('.editBtn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const accountId = e.target.getAttribute('data-id');
+          await openEditModal(accountId);
+        });
       });
-    });
 
-    // Attach event listeners for deactivate buttons
-    document.querySelectorAll('.deactivateBtn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        const accountId = e.target.getAttribute('data-id');
-        await deactivateAccount(accountId);
+      // Attach event listeners for deactivate buttons
+      document.querySelectorAll('.deactivateBtn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const accountId = e.target.getAttribute('data-id');
+          await deactivateAccount(accountId);
+        });
       });
-    });
+    }
   }
 
   async function openEditModal(accountId) {
@@ -145,14 +158,19 @@
 
   document.addEventListener('DOMContentLoaded', ()=>{
     document.getElementById('searchBtn').addEventListener('click', ()=>fetchAccounts(1));
-    document.getElementById('newAccountBtn').addEventListener('click', ()=>{
-      // Reset form for new account
-      const form = document.getElementById('accountForm');
-      form.reset();
-      form.removeAttribute('data-account-id');
-      document.getElementById('modalTitle').innerText = 'Add Account';
-      document.getElementById('accountModal').style.display = 'block';
-    });
+    
+    // Only attach newAccountBtn listener if user is admin
+    const newAccountBtn = document.getElementById('newAccountBtn');
+    if (newAccountBtn && window.userRole === 'administrator') {
+      newAccountBtn.addEventListener('click', ()=>{
+        // Reset form for new account
+        const form = document.getElementById('accountForm');
+        form.reset();
+        form.removeAttribute('data-account-id');
+        document.getElementById('modalTitle').innerText = 'Add Account';
+        document.getElementById('accountModal').style.display = 'block';
+      });
+    }
 
     document.getElementById('prevPage').addEventListener('click', ()=>{ if(currentPage>1) fetchAccounts(currentPage-1) });
     document.getElementById('nextPage').addEventListener('click', ()=>{ fetchAccounts(currentPage+1) });

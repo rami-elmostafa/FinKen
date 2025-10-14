@@ -375,7 +375,9 @@
     <div class="header-left">
       <h2>Chart of Accounts</h2>
       <!-- keep the id the JS expects -->
-      <button id="newAccountBtn" class="add-btn">+ Add</button>
+      {% if user_role == 'administrator' %}
+        <button id="newAccountBtn" class="add-btn">+ Add</button>
+      {% endif %}
     </div>
     <div class="search-box">
       <!-- keep the ids for JS wiring -->
@@ -449,6 +451,10 @@
   <!-- Calendar widget -->
   <div class="calendar-widget" id="calendarWidget"></div>
 
+  <script>
+    // Pass user role to JavaScript
+    window.userRole = "{{ user_role }}";
+  </script>
   <script src="/frontend/ChartOfAccounts.js"></script>
   <script>
     const navToggle = document.querySelector('.nav-toggle');
