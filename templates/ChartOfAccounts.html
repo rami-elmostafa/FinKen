@@ -1,410 +1,224 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chart of Accounts</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  <style>
-    /* Page-specific styles */
-    body {
-      background-color: #f5f5f5;
-    }
-
-    /* Content Container */
-    .content-wrapper {
-      padding: 20px;
-    }
-        
-    .accounts-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-        
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-        
-    .accounts-header h2 {
-      color: #FFC900;
-      font-size: 32px;
-      font-weight: 300;
-      margin: 0;
-    }
-    
-    #accountModal h2 {
-      margin-bottom: 12px;
-    }
-    
-    /* --- Form Layout --- */
-    /* Sets up a grid format for neatness */
-    #accountForm {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px 16px;
-    }
-
-    /* Turns each label into a grid for neatness */
-    #accountForm label {
-      display: grid;
-      grid-template-columns: 140px 1fr;
-      align-items: center;
-      gap: 8px;
-      width: 100%;
-    }
-
-    #accountForm input,
-    #accountForm select {
-      width: 100%;
-      padding: 6px 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-
-    .modal-actions .btn, #cancelModal {
-      background: white !important;
-      border: 1px solid #ddd !important;
-      padding: 8px 20px !important;
-      border-radius: 4px !important;
-      cursor: pointer !important;
-      font-size: 14px !important;
-      font-weight: 500 !important;
-      transition: all 0.2s ease !important;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
-      color: #333 !important;
-      display: inline-block !important;
-      width: auto !important;
-      min-width: auto !important;
-      max-width: none !important;
-    }
-    
-    .modal-actions .btn:hover, #cancelModal:hover {
-      background: #f8f9fa !important;
-      border-color: #bbb !important;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-      transform: translateY(-1px);
-    }
-
-    .modal-actions .btn:active, #cancelModal:active {
-      transform: translateY(0);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
-    }
-        
-    .add-btn {
-      background-color: #000000;
-      color: white;
-      border: none;
-      padding: 8px 20px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-        
-    .add-btn:hover {
-      background-color: #333333;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      transform: translateY(-1px);
-    }
-
-    .add-btn:active {
-      transform: translateY(0);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-        
-    .search-box {
-      display: flex;
-      gap: 10px;
-    }
-        
-    .search-input {
-      padding: 8px 12px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      width: 200px;
-      font-size: 14px;
-    }
-        
-    .search-btn {
-      background-color: #000000;
-      color: white;
-      border: none;
-      padding: 8px 20px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-        
-    .search-btn:hover {
-      background-color: #000000;
-    }
-        
-    table {
-      width: 100%;
-      background-color: white;
-      border-collapse: collapse;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      table-layout: fixed;
-    }
-        
-    th {
-      background-color: #f8f9fa;
-      color: #666;
-      font-weight: 500;
-      text-align: left;
-      padding: 12px;
-      border-bottom: 2px solid #e0e0e0;
-      font-size: 13px;
-    }
-        
-    th.sortable {
-      cursor: pointer;
-      position: relative;
-      padding-right: 25px;
-    }
-        
-    th.sortable::after {
-      content: '▲';
-      position: absolute;
-      right: 8px;
-      font-size: 10px;
-      color: #999;
-    }
-        
-    td {
-      padding: 12px;
-      border-bottom: 1px solid #e8e8e8;
-      font-size: 14px;
-      color: #333;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-        
-    tr:hover {
-      background-color: #f9f9f9;
-    }
-        
-    .account-number {
-      color: #4a9eff;
-      cursor: pointer;
-    }
-        
-    .account-number:hover {
-      text-decoration: underline;
-    }
-        
-    .edit-btn, .editBtn {
-      background-color: #4a9eff;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-        
-    .edit-btn:hover, .editBtn:hover {
-      background-color: #3d8ce6;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-      transform: translateY(-1px);
-    }
-
-    .edit-btn:active, .editBtn:active {
-      transform: translateY(0);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-
-    .deactivateBtn {
-      background-color: #ff4444;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-    
-    .deactivateBtn:hover {
-      background-color: #dd2222;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-      transform: translateY(-1px);
-    }
-
-    .deactivateBtn:active {
-      transform: translateY(0);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-
-    /* Pagination buttons */
-    #prevPage, #nextPage {
-      background: white !important;
-      border: 1px solid #ddd !important;
-      padding: 8px 16px !important;
-      border-radius: 4px !important;
-      cursor: pointer !important;
-      font-size: 14px !important;
-      font-weight: 500 !important;
-      transition: all 0.2s ease !important;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
-      color: #333 !important;
-      display: inline-block !important;
-      width: auto !important;
-      min-width: auto !important;
-      max-width: none !important;
-    }
-    
-    #prevPage:hover:not(:disabled), #nextPage:hover:not(:disabled) {
-      background: #f8f9fa !important;
-      border-color: #bbb !important;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-      transform: translateY(-1px);
-    }
-
-    #prevPage:active:not(:disabled), #nextPage:active:not(:disabled) {
-      transform: translateY(0);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
-    }
-
-    #prevPage:disabled, #nextPage:disabled {
-      background: #f5f5f5 !important;
-      color: #999 !important;
-      cursor: not-allowed !important;
-      opacity: 0.6;
-    }
-
-    #paginationInfo {
-      font-size: 14px;
-      color: #666;
-      padding: 0 8px;
-    }
-
-    /* col widths to match previous layout */
-    .col-number { width: 8%; }
-    .col-name { width: 42%; }
-    .col-type { width: 8%; }
-    .col-term { width: 6%; }
-    .col-balance { width: 9%; }
-    .col-createdby { width: 7%; }
-    .col-date { width: 6%; }
-    .col-comments { width: 6%; }
-    .col-actions { width: 10%; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart of Accounts- FinKen</title>
+    <link rel="stylesheet" href="/frontend/styles.css">
 </head>
 <body>
-  <!-- Header with Branding -->
-  <div class="header">
-    <div class="branding">
-      <div class="branding-content">
-        <img src="{{ url_for('static', filename='images/finkenlogo.png') }}" alt="FinKen Logo" class="logo-image">
-        <div class="branding-text">
-          <h1><span class="pocket-text">Pocket</span><span class="watch-text">Watch</span></h1>
-          <p>Financial Accounting App</p>
+    <!-- Header with Branding -->
+    <div class="header">
+        <div class="branding">
+            <div class="branding-content">
+                <img src="/frontend/images/finkenlogo.png" alt="FinKen Logo" class="logo-image">
+                <div class="branding-text">
+                    <h1><span class="pocket-text">Pocket</span><span class="watch-text">Watch</span></h1>
+                    <p>Financial Accounting App</p>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-    <!-- User Header -->
-    <div class="user-header">
-      <div class="user-info">
-        <span class="user-name">{{ user_name }}</span>
-        <span class="user-role-badge">{{ user_role.title() }}</span>
-      </div>
-      <div class="user-profile">
-        <img src="{{ url_for('profile_image', filename=user_profile_picture) }}" 
-             alt="Profile Picture" class="profile-image">
-      </div>
-    </div>
-  </div>
 
-  <!-- Main Content -->
-  <div class="content-wrapper">
-  <div class="accounts-header">
-    <div class="header-left">
-      <h2>Chart of Accounts</h2>
-      <!-- keep the id the JS expects -->
-      <button id="newAccountBtn" class="add-btn">+ Add</button>
+        <!-- User Header -->
+        <div class="user-header">
+            <div class="user-info">
+                <span class="user-name">{{ user_name }}</span>
+                <span class="user-role-badge">{{ user_role.title() }}</span>
+            </div>
+            <div class="user-profile">
+                <img src="{{ url_for('profile_image', filename=user_profile_picture) }}"
+                     alt="Profile Picture" class="profile-image">
+            </div>
+        </div>
     </div>
-    <div class="search-box">
-      <!-- keep the ids for JS wiring -->
-      <input id="search" class="search-input" placeholder="Search">
-      <button id="searchBtn" class="search-btn">Search</button>
+
+    <!-- Navigation Menu -->
+    <button class="nav-toggle">Toggle Navigation</button>
+    <nav class="navbar">
+        <ul class="nav-list">
+            <img src="/frontend/images/finkenlogo.png" alt="FinKen Logo" class="logo-image">
+            <li><a href="/Home">Home</a></li>
+            {% if user_role == 'administrator' %}
+            <!-- Administrator-only options -->
+                <li><a href="/ManageRegistrations">Manage Registrations</a></li>
+                <li><a href="/Users">Users</a></li>
+                <li><a href="/ExpiringPasswords">Expiring Passwords</a></li>
+            {% endif %}
+            <!-- Common options for all users -->
+            <li class="active"><a href="/ChartOfAccounts"> Chart of Accounts</a></li>
+            <li><a href="#">Statements</a></li>
+            <li><a href="/SignOut">Sign Out</a></li>
+        </ul>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <div class="admin-container">
+        <h1 class="admin-header">Chart of Accounts</h1>
+
+        <!-- Filter Controls -->
+        <div class="filter-controls">
+            <label for="status-filter">Filter by Account Type:</label>
+            <select id="status-filter">
+                <option value="">All Types</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="asset">Asset</option>
+                <option value="liability">Liability</option>
+                <option value="expense">Expense</option>
+            </select>
+
+            <input type="text" id="search-input" placeholder="Search by name or account number...">
+            <button id="search-btn" class="search-btn">Search</button>
+
+            <button type="button" class="btn btn-small btn-secondary" id="new-account-btn">
+                Create New Account
+            </button>
+
+        </div>
     </div>
-  </div>
-    
-  <table id="accountsTable">
-    <colgroup>
-      <col class="col-number" />
-      <col class="col-name" />
-      <col class="col-type" />
-      <col class="col-term" />
-      <col class="col-balance" />
-      <col class="col-createdby" />
-      <col class="col-date" />
-      <col class="col-comments" />
-      <col class="col-actions" />
-    </colgroup>
-    <thead>
-      <tr>
-        <th class="sortable col-number">Account<br>Number</th>
-        <th class="sortable col-name">Name</th>
-        <th class="col-type">Type</th>
-        <th class="col-term">Term</th>
-        <th class="col-balance">Balance</th>
-        <th class="col-createdby">Created By</th>
-        <th class="col-date">Date<br>Created</th>
-        <th class="col-comments">Comments</th>
-        <th class="col-actions"> </th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
 
-  <div class="pagination" id="accountsPagination" style="margin-top:16px; display:flex; gap:12px; align-items:center; justify-content:center; background:white; padding:16px; border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.1)">
-    <button id="prevPage" class="btn">← Previous</button>
-    <span id="paginationInfo"></span>
-    <button id="nextPage" class="btn">Next →</button>
-  </div>
+    <!-- Chart of Accounts -->
+        <div class="requests-table">
+            <table id="accounts-table">
+                <thead>
+                    <tr>
+                        <th>Number</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>NormalSide</th>
+                        <th>Balance</th>
+                        <th>Created By</th>
+                        <th>Date Created</th>
+                        <th>Comments</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="accounts-table-body">
+                    <!-- Accounts will be loaded via JavaScript -->
+                </tbody>
+            </table>
+            </div>
 
-  <!-- Add/Edit modal (preserve existing form IDs) -->
+            <div id="no-accounts" class="no-requests" style="display: none;">
+                <p>No accounts found.</p>
+            </div>
+            <div id="loading" class="no-requests">
+                <p>Loading accounts...</p>
+            </div>
+
+    <!-- Pagination -->
+        <div class="pagination" id="pagination" style="display: none;">
+            <button id="prev-page" class="pagination-btn">Previous</button>
+            <span id="page-info"></span>
+            <button id="next-page" class="pagination-btn">Next</button>
+        </div>
+
+<!-- Add/Edit modal -->
   <div id="accountModal" class="modal" aria-hidden="true" style="display:none">
-    <div class="modal-content" style="background:#fff;padding:16px;border-radius:6px;max-width:600px;margin:24px auto;box-shadow:0 6px 24px rgba(0,0,0,0.12)">
+    <div class="modal-content">
       <h2 id="modalTitle">Add Account</h2>
       <form id="accountForm">
-        <label>Account Number <input name="AccountNumber" required pattern="\d+" title="Digits only, leading zeros allowed"></label>
-        <label>Account Name <input name="AccountName" required></label>
-        <label>Description <input name="Description"></label>
-        <label>Normal Side <select name="NormalSide" required><option value="Debit">Debit</option><option value="Credit">Credit</option></select></label>
-        <label>Category <input name="Category"></label>
-        <label>Subcategory <input name="Subcategory"></label>
-        <label>Initial Balance <input name="InitialBalance" value="0.00"></label>
-        <label>Debit <input name="Debit" value="0.00"></label>
-        <label>Credit <input name="Credit" value="0.00"></label>
-        <label>Balance <input name="Balance" value="0.00"></label>
-        <label>Statement <select name="Statement"><option value="BS">BS</option><option value="IS">IS</option><option value="RE">RE</option></select></label>
-        <label>Order <input name="Order"></label>
-        <label>Comment <input name="Comment"></label>
-        <div class="modal-actions" style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
-          <button type="submit" class="add-btn">Save</button>
-          <button type="button" id="cancelModal" class="btn">Cancel</button>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="AccountNumber">Account Number <span class="required">*</span></label>
+                <input id="AccountNumber" name="AccountNumber" required pattern="\d+" title="Digits only, leading zeros allowed">
+            </div>
+            <div class="form-group">
+                <label for="AccountName">Account Name <span class="required">*</span></label>
+                <input id="AccountName" name="AccountName" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="Description">Description</label>
+            <input id="Description" name="Description">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="NormalSide">Normal Side <span class="required">*</span></label>
+                <select id="NormalSide" name="NormalSide" required>
+                    <option value="Debit">Debit</option>
+                    <option value="Credit">Credit</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="Statement">Statement</label>
+                <select id="Statement" name="Statement">
+                    <option value="BS">BS</option>
+                    <option value="IS">IS</option>
+                    <option value="RE">RE</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="Category">Category</label>
+                <input id="Category" name="Category">
+            </div>
+            <div class="form-group">
+                <label for="Subcategory">Subcategory</label>
+                <input id="Subcategory" name="Subcategory">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="InitialBalance">Initial Balance</label>
+                <input id="InitialBalance" name="InitialBalance" value="0.00">
+            </div>
+            <div class="form-group">
+                <label for="Balance">Balance</label>
+                <input id="Balance" name="Balance" value="0.00">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="Debit">Debit</label>
+                <input id="Debit" name="Debit" value="0.00">
+            </div>
+            <div class="form-group">
+                <label for="Credit">Credit</label>
+                <input id="Credit" name="Credit" value="0.00">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="Order">Order</label>
+                <input id="Order" name="Order">
+            </div>
+            <div class="form-group">
+                <label for="Comment">Comment</label>
+                <input id="Comment" name="Comment">
+            </div>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="button" id="cancelModal" class="btn btn-secondary">Cancel</button>
         </div>
       </form>
     </div>
   </div>
 
-  </div> <!-- Close content-wrapper -->
+    <script>
+        document.querySelector('.nav-toggle').addEventListener('click', function() {
+            document.querySelector('.navbar').style.left = '0';
+        });
+
+        document.querySelector('.navbar').addEventListener('mouseleave', function() {
+            document.querySelector('.navbar').style.left = '-250px';
+        });
+    </script>
 
   <script src="/frontend/ChartOfAccounts.js"></script>
 </body>

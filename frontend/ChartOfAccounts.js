@@ -7,10 +7,10 @@
 
   async function fetchAccounts(page = 1){
     currentPage = page;
-    const q = document.getElementById('search').value || '';
+    const q = document.getElementById('search-input').value || '';
     const res = await fetch(`/api/accounts?search=${encodeURIComponent(q)}&page=${page}&per_page=${perPage}`);
     const body = await res.json();
-    const tbody = document.querySelector('#accountsTable tbody');
+    const tbody = document.getElementById('accounts-table-body');
     tbody.innerHTML = '';
     if(body.success){
       accountsCache = body.accounts || [];
@@ -27,7 +27,7 @@
   }
 
   function renderAccounts(){
-    const tbody = document.querySelector('#accountsTable tbody');
+    const tbody = document.getElementById('accounts-table-body');
     tbody.innerHTML = '';
     const list = accountsCache.slice();
     list.sort((a,b)=>{
@@ -42,15 +42,15 @@
       const dateCreated = a.datecreated ? new Date(a.datecreated).toISOString().slice(0,10) : '';
       const statusBadge = a.isactive === false ? '<span style="color:#ff4444;font-weight:bold;"> (Inactive)</span>' : '';
       tr.innerHTML = `
-        <td class="col-number"><a href="/ledger/${a.accountnumber}">${a.accountnumber}</a></td>
-        <td class="col-name">${a.accountname || ''}${statusBadge}</td>
-        <td class="col-type">${a.category || ''}</td>
-        <td class="col-term">${a.normalside || ''}</td>
-        <td class="col-balance">${a.initialbalance_formatted || a.initialbalance || ''}</td>
-        <td class="col-createdby">${a.createdby_username || ''}</td>
-        <td class="col-date">${dateCreated}</td>
-        <td class="col-comments">${a.comment || ''}</td>
-        <td class="col-actions">
+        <td><a href="/ledger/${a.accountnumber}">${a.accountnumber}</a></td>
+        <td>${a.accountname || ''}${statusBadge}</td>
+        <td>${a.category || ''}</td>
+        <td>${a.normalside || ''}</td>
+        <td>${a.initialbalance_formatted || a.initialbalance || ''}</td>
+        <td>${a.createdby_username || ''}</td>
+        <td>${dateCreated}</td>
+        <td>${a.comment || ''}</td>
+        <td>
           <button data-id="${a.accountid}" class="editBtn">Edit</button>
           ${a.isactive !== false ? `<button data-id="${a.accountid}" class="deactivateBtn" style="background-color:#ff4444;margin-left:4px;">Deactivate</button>` : ''}
         </td>
@@ -144,8 +144,8 @@
   }
 
   document.addEventListener('DOMContentLoaded', ()=>{
-    document.getElementById('searchBtn').addEventListener('click', ()=>fetchAccounts(1));
-    document.getElementById('newAccountBtn').addEventListener('click', ()=>{
+    document.getElementById('search-btn').addEventListener('click', ()=>fetchAccounts(1));
+    document.getElementById('new-account-btn').addEventListener('click', ()=>{
       // Reset form for new account
       const form = document.getElementById('accountForm');
       form.reset();
@@ -154,11 +154,11 @@
       document.getElementById('accountModal').style.display = 'block';
     });
 
-    document.getElementById('prevPage').addEventListener('click', ()=>{ if(currentPage>1) fetchAccounts(currentPage-1) });
-    document.getElementById('nextPage').addEventListener('click', ()=>{ fetchAccounts(currentPage+1) });
+    document.getElementById('prev-page').addEventListener('click', ()=>{ if(currentPage>1) fetchAccounts(currentPage-1) });
+    document.getElementById('next-page').addEventListener('click', ()=>{ fetchAccounts(currentPage+1) });
 
     // header sorting
-    document.querySelectorAll('#accountsTable thead th').forEach(th=>{
+    document.querySelectorAll('#accounts-table thead th').forEach(th=>{
       th.style.cursor='pointer';
       th.addEventListener('click', ()=>{
         // find the first class that starts with 'col-'
@@ -171,11 +171,16 @@
         renderAccounts();
       });
     });
+      // Top-left container for widgets
+      const topLeftContainer = document.createElement('div');
+      topLeftContainer.className = 'top-left-container';
+
       // calendar widget
       const cal = document.createElement('div');
       cal.className = 'calendar-widget';
       cal.innerText = new Date().toLocaleDateString();
-      document.body.appendChild(cal);
+      topLeftContainer.appendChild(cal);
+
       // help button
       const helpBtn = document.createElement('button');
       helpBtn.className = 'help-btn';
@@ -190,7 +195,10 @@
         }
         m.style.display = 'block';
       });
-      document.body.appendChild(helpBtn);
+      topLeftContainer.appendChild(helpBtn);
+
+      document.body.appendChild(topLeftContainer);
+
     document.getElementById('cancelModal').addEventListener('click', ()=>{
       document.getElementById('accountModal').style.display = 'none';
     });
