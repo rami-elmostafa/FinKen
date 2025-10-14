@@ -1,15 +1,69 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Ledger - {{ account_number }}</title>
-  <link rel="stylesheet" href="/styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart of Accounts- FinKen</title>
+    <link rel="stylesheet" href="/frontend/styles.css">
 </head>
 <body>
-  <header class="topbar">
-    <img src="/images/finkenlogo.png" alt="logo" class="logo">
-    <div class="user-info">Logged in: {{ user_name }}</div>
-  </header>
+    <!-- Header with Branding -->
+    <div class="header">
+        <div class="branding">
+            <div class="branding-content">
+                <img src="/frontend/images/finkenlogo.png" alt="FinKen Logo" class="logo-image">
+                <div class="branding-text">
+                    <h1><span class="pocket-text">Pocket</span><span class="watch-text">Watch</span></h1>
+                    <p>Financial Accounting App</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Header -->
+        <div class="user-header">
+            <div class="user-info">
+                <span class="user-name">{{ user_name }}</span>
+                <span class="user-role-badge">{{ user_role.title() }}</span>
+            </div>
+            <div class="user-profile">
+                <img src="{{ url_for('profile_image', filename=user_profile_picture) }}"
+                     alt="Profile Picture" class="profile-image">
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <button class="nav-toggle">Toggle Navigation</button>
+    <nav class="navbar">
+        <ul class="nav-list">
+            <img src="/frontend/images/finkenlogo.png" alt="FinKen Logo" class="logo-image">
+            <li><a href="/Home">Home</a></li>
+            {% if user_role == 'administrator' %}
+            <!-- Administrator-only options -->
+                <li><a href="/ManageRegistrations">Manage Registrations</a></li>
+                <li><a href="/Users">Users</a></li>
+                <li><a href="/ExpiringPasswords">Expiring Passwords</a></li>
+            {% endif %}
+            <!-- Common options for all users -->
+            <li><a href="/ChartOfAccounts"> Chart of Accounts</a></li>
+            <li><a href="#">Statements</a></li>
+            <li><a href="/SignOut">Sign Out</a></li>
+        </ul>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    <!--Main Content -->
   <main class="container">
     <h1>Ledger for account {{ account_number }}</h1>
     {% if entries %}
@@ -27,8 +81,21 @@
         </tbody>
       </table>
     {% else %}
-      <p>No ledger transactions found for this account (placeholder).</p>
+      <p>No ledger transactions found for this account.</p>
     {% endif %}
   </main>
+
+    <script>
+        document.querySelector('.nav-toggle').addEventListener('click', function() {
+            document.querySelector('.navbar').style.left = '0';
+        });
+
+        document.querySelector('.navbar').addEventListener('mouseleave', function() {
+            document.querySelector('.navbar').style.left = '-250px';
+        });
+
+        window.user_role = '{{ user_role }}';
+    </script>
+
 </body>
 </html>
