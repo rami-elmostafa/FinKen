@@ -7,16 +7,14 @@
 
   async function fetchAccounts(page = 1){
     currentPage = page;
-    document.getElementById('loading').style.display = 'block';
-    const q = document.getElementById('search-input').value || '';
+    const q = document.getElementById('search').value || '';
     const res = await fetch(`/api/accounts?search=${encodeURIComponent(q)}&page=${page}&per_page=${perPage}`);
     const body = await res.json();
-    const tbody = document.getElementById('accounts-table-body');
+    const tbody = document.querySelector('#accountsTable tbody');
     tbody.innerHTML = '';
     if(body.success){
       accountsCache = body.accounts || [];
       renderAccounts();
-      document.getElementById('loading').style.display = 'none';
       // update pagination UI
       const info = document.getElementById('paginationInfo');
       const prev = document.getElementById('prevPage');
@@ -29,7 +27,7 @@
   }
 
   function renderAccounts(){
-    const tbody = document.getElementById('accounts-table-body');
+    const tbody = document.querySelector('#accountsTable tbody');
     tbody.innerHTML = '';
     const list = accountsCache.slice();
     list.sort((a,b)=>{
@@ -51,26 +49,25 @@
           <button data-id="${a.accountid}" class="btn btn-small btn-secondary edit-btn">Edit</button>
           ${a.isactive !== false ? `<button data-id="${a.accountid}" class="btn btn-small btn-danger status-btn">Deactivate</button>` : ''}
          </div>
-
         `;
       }
 
       tr.innerHTML = `
-        <td><a href="/ledger/${a.accountnumber}">${a.accountnumber}</a></td>
-        <td>${a.accountname || ''}${statusBadge}</td>
-        <td>${a.category || ''}</td>
-        <td>${a.normalside || ''}</td>
-        <td>${a.initialbalance_formatted || a.initialbalance || ''}</td>
-        <td>${a.createdby_username || ''}</td>
-        <td>${dateCreated}</td>
-        <td>${a.comment || ''}</td>
+        <td class="col-number"><a href="/ledger/${a.accountnumber}">${a.accountnumber}</a></td>
+        <td class="col-name">${a.accountname || ''}${statusBadge}</td>
+        <td class="col-type">${a.category || ''}</td>
+        <td class="col-term">${a.normalside || ''}</td>
+        <td class="col-balance">${a.initialbalance_formatted || a.initialbalance || ''}</td>
+        <td class="col-createdby">${a.createdby_username || ''}</td>
+        <td class="col-date">${dateCreated}</td>
+        <td class="col-comments">${a.comment || ''}</td>
         <td>${actionButtons}</td>
       `;
       tbody.appendChild(tr);
     });
 
     // Attach event listeners for edit buttons
-    document.querySelectorAll('.editBtn').forEach(btn => {
+    document.querySelectorAll('.edit-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const accountId = e.target.getAttribute('data-id');
         await openEditModal(accountId);
@@ -78,7 +75,7 @@
     });
 
     // Attach event listeners for deactivate buttons
-    document.querySelectorAll('.deactivateBtn').forEach(btn => {
+    document.querySelectorAll('.status-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const accountId = e.target.getAttribute('data-id');
         await deactivateAccount(accountId);
@@ -94,14 +91,14 @@
         alert(body.message || 'Failed to load account');
         return;
       }
-      
+
       const account = body.account;
       const form = document.getElementById('accountForm');
       const modal = document.getElementById('accountModal');
-      
+
       // Change modal title
       document.getElementById('modalTitle').innerText = 'Edit Account';
-      
+
       // Populate form fields with null checks
       const setFieldValue = (name, value) => {
         const field = form.querySelector(`[name="${name}"]`);
@@ -109,7 +106,7 @@
           field.value = value || '';
         }
       };
-      
+
       setFieldValue('AccountNumber', account.accountnumber);
       setFieldValue('AccountName', account.accountname);
       setFieldValue('Description', account.accountdescription);
@@ -123,10 +120,10 @@
       setFieldValue('Statement', account.statementtype || 'BS');
       setFieldValue('Order', account.displayorder);
       setFieldValue('Comment', account.comment);
-      
+
       // Store account ID for update
       form.setAttribute('data-account-id', accountId);
-      
+
       modal.style.display = 'block';
     } catch (err) {
       alert('Error loading account: ' + err.message);
@@ -138,7 +135,7 @@
     if (!confirm('Are you sure you want to deactivate this account? Accounts with positive balances cannot be deactivated.')) {
       return;
     }
-    
+
     try {
       const res = await fetch(`/api/accounts/${accountId}/deactivate`, {
         method: 'POST',
@@ -165,8 +162,8 @@
       document.getElementById('accountModal').style.display = 'block';
     });
 
-    document.getElementById('prev-page').addEventListener('click', ()=>{ if(currentPage>1) fetchAccounts(currentPage-1) });
-    document.getElementById('next-page').addEventListener('click', ()=>{ fetchAccounts(currentPage+1) });
+    document.getElementById('prevPage').addEventListener('click', ()=>{ if(currentPage>1) fetchAccounts(currentPage-1) });
+    document.getElementById('nextPage').addEventListener('click', ()=>{ fetchAccounts(currentPage+1) });
 
     // header sorting
     document.querySelectorAll('#accounts-table thead th').forEach(th=>{
