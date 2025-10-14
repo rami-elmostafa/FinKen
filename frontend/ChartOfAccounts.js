@@ -7,6 +7,7 @@
 
   async function fetchAccounts(page = 1){
     currentPage = page;
+    document.getElementById('loading').style.display = 'block';
     const q = document.getElementById('search-input').value || '';
     const res = await fetch(`/api/accounts?search=${encodeURIComponent(q)}&page=${page}&per_page=${perPage}`);
     const body = await res.json();
@@ -15,6 +16,7 @@
     if(body.success){
       accountsCache = body.accounts || [];
       renderAccounts();
+      document.getElementById('loading').style.display = 'none';
       // update pagination UI
       const info = document.getElementById('paginationInfo');
       const prev = document.getElementById('prevPage');
@@ -41,6 +43,18 @@
       const tr = document.createElement('tr');
       const dateCreated = a.datecreated ? new Date(a.datecreated).toISOString().slice(0,10) : '';
       const statusBadge = a.isactive === false ? '<span style="color:#ff4444;font-weight:bold;"> (Inactive)</span>' : '';
+
+      let actionButtons = '';
+      if (window.user_role === 'administrator') {
+        actionButtons = `
+         <div class="action-buttons">
+          <button data-id="${a.accountid}" class="btn btn-small btn-secondary edit-btn">Edit</button>
+          ${a.isactive !== false ? `<button data-id="${a.accountid}" class="btn btn-small btn-danger status-btn">Deactivate</button>` : ''}
+         </div>
+
+        `;
+      }
+
       tr.innerHTML = `
         <td><a href="/ledger/${a.accountnumber}">${a.accountnumber}</a></td>
         <td>${a.accountname || ''}${statusBadge}</td>
@@ -50,10 +64,7 @@
         <td>${a.createdby_username || ''}</td>
         <td>${dateCreated}</td>
         <td>${a.comment || ''}</td>
-        <td>
-          <button data-id="${a.accountid}" class="editBtn">Edit</button>
-          ${a.isactive !== false ? `<button data-id="${a.accountid}" class="deactivateBtn" style="background-color:#ff4444;margin-left:4px;">Deactivate</button>` : ''}
-        </td>
+        <td>${actionButtons}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -189,7 +200,11 @@
         let m = document.querySelector('.help-modal');
         if(!m){
           m = document.createElement('div'); m.className='help-modal';
-          m.innerHTML = '<h2>Help - Chart of Accounts</h2><p>Use this page to add, edit, search and deactivate accounts. Admins can create and modify accounts. Click an account number to view its ledger.</p><button id="closeHelp">Close</button>';
+          if (window.user_role === 'administrator') {
+            m.innerHTML = '<h2>Help - Chart of Accounts</h2><p>Use this page to add, edit, search and deactivate accounts. As an administrator, you can create and modify all accounts. Click an account number to view its ledger.</p><button id="closeHelp">Close</button>';
+          } else {
+            m.innerHTML = '<h2>Help - Chart of Accounts</h2><p>Use this page to search and view accounts. Click an account number to view its ledger. Please contact an administrator if you need to create or modify an account.</p><button id="closeHelp">Close</button>';
+          }
           document.body.appendChild(m);
           m.querySelector('#closeHelp').addEventListener('click', ()=>m.style.display='none');
         }

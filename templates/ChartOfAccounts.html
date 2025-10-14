@@ -79,16 +79,12 @@
                 <option value="liability">Liability</option>
                 <option value="expense">Expense</option>
             </select>
-
             <input type="text" id="search-input" placeholder="Search by name or account number...">
             <button id="search-btn" class="search-btn">Search</button>
-
-            <button type="button" class="btn btn-small btn-secondary" id="new-account-btn">
-                Create New Account
-            </button>
-
+            {% if user_role == 'administrator' %}
+            <button class="btn btn-primary" id="new-account-btn">Add New Account</button>
+            {% endif %}
         </div>
-    </div>
 
     <!-- Chart of Accounts -->
         <div class="requests-table">
@@ -118,13 +114,14 @@
             <div id="loading" class="no-requests">
                 <p>Loading accounts...</p>
             </div>
+        </div>
 
     <!-- Pagination -->
-        <div class="pagination" id="pagination" style="display: none;">
-            <button id="prev-page" class="pagination-btn">Previous</button>
-            <span id="page-info"></span>
-            <button id="next-page" class="pagination-btn">Next</button>
-        </div>
+    <div class="pagination" id="accountsPagination">
+        <button id="prevPage" class="pagination-btn">← Previous</button>
+        <span id="paginationInfo"></span>
+        <button id="nextPage" class="pagination-btn">Next →</button>
+    </div>
 
 <!-- Add/Edit modal -->
   <div id="accountModal" class="modal" aria-hidden="true" style="display:none">
@@ -218,6 +215,8 @@
         document.querySelector('.navbar').addEventListener('mouseleave', function() {
             document.querySelector('.navbar').style.left = '-250px';
         });
+
+        window.user_role = '{{ user_role }}';
     </script>
 
   <script src="/frontend/ChartOfAccounts.js"></script>
